@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+model User {
+  id          String       @id @db.Uuid
+  email       String       @unique
+  fullName    String
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+  leaveGroups LeaveGroup[]
+  auditLogs   AuditLog[]
+}
+
+model Organisation {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  slug           String          @unique
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  memberships    Membership[]
+  leaveTypes     LeaveType[]
+  calendarEvents CalendarEvent[]
+  auditLogs      AuditLog[]
+}
+
+model Membership {
+  id                  String         @id @default(uuid()) @db.Uuid
+  userId              String         @db.Uuid
+  organisationId      String         @db.Uuid
+  role                Role           @default(EMPLOYEE)
+  active              Boolean        @default(true)
+  managerMembershipId String?        @db.Uuid
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  user                User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  organisation        Organisation   @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  manager             Membership?    @relation("Team", fields: [managerMembershipId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  team                Membership[]   @relation("Team")
+  balances            LeaveBalance[]
+  requests            LeaveRequest[] @relation("Owner")
+  decisions           LeaveRequest[] @relation("Approver")
+
+  @@unique([userId, organisationId])
+  @@unique([id, organisationId])
+  @@unique([id, organisationId, userId])
+  @@index([organisationId, active, role])
+  @@index([managerMembershipId])
+}
+
+model LeaveType {
+  id              String         @id @default(uuid()) @db.Uuid
+  organisationId  String         @db.Uuid
+  code            String
+  name            String
+  balanceLimited  Boolean        @default(true)
+  active          Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  organisation    Organisation   @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  balances        LeaveBalance[]
+  requests        LeaveRequest[]
+
+  @@unique([organisationId, code])
+  @@unique([id, organisationId])
+}
+
+model LeaveBalance {
+  id             String       @id @default(uuid()) @db.Uuid
+  membershipId   String       @db.Uuid
+  organisationId String       @db.Uuid
+  leaveTypeId    String       @db.Uuid
+  year           Int
+  allocatedDays  Decimal      @db.Decimal(8, 2)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  membership     Membership   @relation(fields: [membershipId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  leaveType      LeaveType    @relation(fields: [leaveTypeId, organisationId], references: [id, organisationId], onDelete: Restrict)
+
+  @@unique([membershipId, leaveTypeId, year])
+  @@index([organisationId, year])
+}
+
+model LeaveGroup {
+  id        String         @id @default(uuid()) @db.Uuid
+  userId    String         @db.Uuid
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  requests  LeaveRequest[]
+
+  @@unique([id, userId])
+}
+
+model LeaveRequest {
+  id                   String         @id @default(uuid()) @db.Uuid
+  membershipId         String         @db.Uuid
+  organisationId       String         @db.Uuid
+  userId               String         @db.Uuid
+  leaveTypeId          String         @db.Uuid
+  groupId              String?        @db.Uuid
+  startDate            DateTime       @db.Date
+  endDate              DateTime       @db.Date
+  workingDays          Int
+  reason               String?
+  status               LeaveStatus    @default(PENDING)
+  submittedAt          DateTime       @default(now())
+  approverMembershipId String?        @db.Uuid
+  decidedAt            DateTime?
+  decisionComment      String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  membership           Membership     @relation("Owner", fields: [membershipId, organisationId, userId], references: [id, organisationId, userId], onDelete: Restrict)
+  leaveType            LeaveType      @relation(fields: [leaveTypeId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  group                LeaveGroup?    @relation(fields: [groupId, userId], references: [id, userId], onDelete: Restrict)
+  approver             Membership?    @relation("Approver", fields: [approverMembershipId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  calendarEvent        CalendarEvent?
+
+  @@unique([id, organisationId])
+  @@unique([groupId, organisationId])
+  @@index([membershipId, status, startDate, endDate])
+  @@index([organisationId, status, submittedAt])
+  @@index([approverMembershipId])
+}
+
+model CalendarEvent {
+  id             String       @id @default(uuid()) @db.Uuid
+  organisationId String       @db.Uuid
+  requestId      String       @unique @db.Uuid
+  startDate      DateTime     @db.Date
+  endDate        DateTime     @db.Date
+  active         Boolean      @default(true)
+  visibility     String       @default("ORGANISATION")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  request        LeaveRequest @relation(fields: [requestId, organisationId], references: [id, organisationId], onDelete: Restrict)
+
+  @@unique([requestId, organisationId])
+  @@index([organisationId, startDate, endDate])
+}
+
+model AuditLog {
+  id             String       @id @default(uuid()) @db.Uuid
+  organisationId String       @db.Uuid
+  actorUserId    String       @db.Uuid
+  action         String
+  entityType     String
+  entityId       String       @db.Uuid
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  actor          User         @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([organisationId, createdAt])
+  @@index([entityType, entityId])
+}
