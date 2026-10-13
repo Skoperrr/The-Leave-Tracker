@@ -20,9 +20,9 @@ Node loads local .env before startup. Protected routes require the database/Auth
 Create or select the intended Supabase development project. Configure the following in ignored `backend/.env`, never in chat, screenshots or committed files:
 
 - `DATABASE_URL`: server PostgreSQL connection; confirm pooler/direct choice with the chosen Prisma version.
-- `DIRECT_URL`: direct/session connection if required for migrations by that Prisma configuration.
+- Optional `DIRECT_URL`: direct/session connection for migrations. When absent, Prisma CLI uses `DATABASE_URL`.
 - `SUPABASE_URL`: project's HTTPS URL.
-- `SUPABASE_PUBLISHABLE_KEY`: publishable key for project-scoped authentication calls (or clarify legacy anon-key compatibility).
+- `SUPABASE_PUBLISHABLE_KEY` or legacy `SUPABASE_ANON_KEY`: public key for project-scoped authentication calls. A blank publishable key falls back to the configured anon key.
 - `SUPABASE_SERVICE_ROLE_KEY`: backend-only privileged key, only when needed by the Auth-backed demo seed process. Never a Vite variable.
 
 Remove the leading `#` from configured variables in your local .env; commented lines are ignored. Use the complete Session pooler URL on port 5432, including the project-scoped username and URL-encoded database password. DATABASE_URL and DIRECT_URL may both use this session connection during local development. A Supabase API key is not the database password.
@@ -52,7 +52,7 @@ The frontend uses its own public Supabase project settings for browser sign-in a
 - Startup configuration failure: check the named field in `.env`.
 - Listen failure: check whether port 3001 is occupied or the environment restricts sockets; choose a free PORT.
 - 403 from a browser: ensure its exact origin is in FRONTEND_ORIGINS.
-- Access, employee leave, manager queue/decision and calendar routes are implemented: absent/invalid tokens give 401; an unavailable profile gives 403. Admin/Google endpoints remain pending and return 404 after authentication.
+- Access, employee leave, manager queue/decision and calendar routes are implemented: absent/invalid tokens give 401; an unprovisioned profile gives 404; an inactive profile gives 403. An active profile with no memberships returns an empty list. Admin/Google endpoints remain pending and return 404 after authentication.
 - Health succeeds but login/database do not: health currently checks process liveness only.
 
 ## Authentication milestone

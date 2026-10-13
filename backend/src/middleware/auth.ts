@@ -9,11 +9,20 @@ export function authenticatedAccount(response: Response): Account {
 
 export function authenticate(services?: AccessServices): RequestHandler {
   return async (request, response, next) => {
+    response.set('Cache-Control', 'no-store');
     const header = request.get('Authorization');
-    const token = header?.match(/^Bearer ([^\s]+)$/i)?.[1];
-    if (!token || token.length > 8192) throw new ApiError(401, 'UNAUTHENTICATED', 'A bearer access token is required');
+    const token = header?.match(/^Bearer ([A-Za-z0-9._~-]+)$/i)?.[1];
+    if (!token || token.length > 8192) {
+      response.set('WWW-Authenticate', 'Bearer');
+      throw new ApiError(401, 'UNAUTHENTICATED', 'A bearer access token is required');
+    }
     if (!services) throw new ApiError(500, 'INTERNAL_ERROR', 'Authentication is not configured');
-    response.locals.account = await authenticateAccount(services, token);
+    try {
+      response.locals.account = await authenticateAccount(services, token);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) response.set('WWW-Authenticate', 'Bearer');
+      throw error;
+    }
     next();
   };
 }

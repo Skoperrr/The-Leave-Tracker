@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: The Leave Tracker API
   version: 0.4.0
-  description: Access, employee leave, manager decisions and internal calendars. Admin APIs and Google integration are pending.
+  description: Access, employee leave, manager decisions and internal calendars. Protected responses use Cache-Control no-store. Admin APIs and Google integration are pending.
 servers:
   - url: http://localhost:3001/api/v1
 paths:
@@ -38,6 +38,7 @@ paths:
         '400': { $ref: '#/components/responses/InvalidInput' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/ProfileNotFound' }
         '500': { $ref: '#/components/responses/InternalError' }
   /manager/leave-requests/{id}/decision:
     post:
@@ -92,6 +93,7 @@ paths:
         '400': { $ref: '#/components/responses/InvalidInput' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/ProfileNotFound' }
         '500': { $ref: '#/components/responses/InternalError' }
   /balances:
     get:
@@ -116,6 +118,7 @@ paths:
         '400': { $ref: '#/components/responses/InvalidInput' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/ProfileNotFound' }
         '500': { $ref: '#/components/responses/InternalError' }
   /leave-requests:
     post:
@@ -182,6 +185,7 @@ paths:
         '400': { $ref: '#/components/responses/InvalidInput' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/ProfileNotFound' }
         '500': { $ref: '#/components/responses/InternalError' }
   /leave-requests/{id}/cancel:
     post:
@@ -227,6 +231,8 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ProfileNotFound'
         '500':
           $ref: '#/components/responses/InternalError'
   /organisations:
@@ -252,6 +258,8 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ProfileNotFound'
         '500':
           $ref: '#/components/responses/InternalError'
   /organisations/{orgId}/leave-types:
@@ -286,6 +294,8 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ProfileNotFound'
         '500':
           $ref: '#/components/responses/InternalError'
   /health:
@@ -340,14 +350,25 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
+    ProfileNotFound:
+      description: Verified identity has no provisioned application profile
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     Unauthenticated:
       description: Absent or invalid bearer token
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            enum: [Bearer]
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     Forbidden:
-      description: Inactive/missing profile or no active organisation membership
+      description: Inactive profile or no active organisation membership
       content:
         application/json:
           schema:

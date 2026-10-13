@@ -20,7 +20,7 @@ Input middleware is ready for future endpoint schemas: handlers use parsed `resp
 
 ## Implemented access endpoints
 
-All require `Authorization: Bearer <Supabase access token>`. The backend calls Supabase getUser(token), then queries PostgreSQL by that verified identity ID. A missing/inactive application profile returns 403 FORBIDDEN; profiles/memberships must be provisioned by the future safe Auth-backed seed/admin process. No role/user supplied by the browser is trusted.
+All require `Authorization: Bearer <Supabase access token>`. The backend calls Supabase getUser(token), then queries PostgreSQL by that verified identity ID. A missing application profile returns 404 NOT_FOUND; an inactive profile returns 403 FORBIDDEN. Provision profiles/memberships through the documented Auth-backed seed or a trusted administrator. No role/user supplied by the browser is trusted. Protected responses use `Cache-Control: no-store`; 401 responses include the Bearer authentication challenge.
 
 | Method/path | Input/roles | Response |
 |---|---|---|
@@ -28,7 +28,7 @@ All require `Authorization: Bearer <Supabase access token>`. The backend calls S
 | GET `/api/v1/organisations` | Active profile; no body/query required | 200 `{data:[{id,name,slug}]}` from own active memberships only |
 | GET `/api/v1/organisations/:orgId/leave-types` | Active EMPLOYEE/MANAGER/ADMIN membership; UUID path | 200 `{data:[{id,organisationId,code,name}]}`; active leave types only |
 
-Error responses: 400 VALIDATION_ERROR for an invalid organisation UUID; 401 UNAUTHENTICATED for missing/malformed/rejected tokens; 403 FORBIDDEN for unavailable profile, or ORGANISATION_MEMBERSHIP_REQUIRED for an unauthorised organisation; safe 500 INTERNAL_ERROR for provider/database outages. Membership is checked before the leave-type query. Profile and role data come from database records, not JWT user metadata.
+Error responses: 400 VALIDATION_ERROR for an invalid organisation UUID; 401 UNAUTHENTICATED for missing/malformed/rejected tokens; 404 NOT_FOUND for an unprovisioned profile; 403 FORBIDDEN for an inactive profile, or ORGANISATION_MEMBERSHIP_REQUIRED for an unauthorised organisation; safe 500 INTERNAL_ERROR for provider/database outages. Membership is checked before the leave-type query. Profile and role data come from database records, not JWT user metadata.
 
 ```ts
 const response = await fetch(`${apiUrl}/api/v1/me`, {
@@ -93,8 +93,8 @@ Errors use `{error:{code,message,details}}`:
 
 - 400 VALIDATION_ERROR: invalid UUIDs, duplicate selections, fabricated fields or pagination; INVALID_DATE_RANGE: invalid business dates.
 - 401 UNAUTHENTICATED: absent/invalid tokens.
-- 403 ORGANISATION_MEMBERSHIP_REQUIRED: unauthorised/inactive selected organisation; FORBIDDEN: missing/inactive profile.
-- 404 NOT_FOUND: inactive/missing leave type or missing/another user's cancellation target.
+- 403 ORGANISATION_MEMBERSHIP_REQUIRED: unauthorised/inactive selected organisation; FORBIDDEN: inactive profile.
+- 404 NOT_FOUND: unprovisioned profile, inactive/missing leave type or missing/another user's cancellation target.
 - 409 OVERLAPPING_REQUEST: inclusive overlap with own PENDING/APPROVED request in the same membership, including across types; STATUS_CONFLICT: repeat/non-pending cancellation.
 - 422 INSUFFICIENT_BALANCE: any selected organisation lacks allocation after reservations. Details: organisationId, requestedDays and remainingDays.
 - 500 INTERNAL_ERROR: unexpected provider/database error; no secrets/stack traces returned.
@@ -139,7 +139,7 @@ Error envelope remains `{error:{code,message,details}}`:
 - 400 VALIDATION_ERROR: bad query/UUID/decision, forged fields or missing decline comment. INVALID_DATE_RANGE: impossible/reversed calendar dates.
 - 401 UNAUTHENTICATED: absent/invalid bearer.
 - 403 FORBIDDEN: employee role on manager queue or own decision; ORGANISATION_MEMBERSHIP_REQUIRED: unauthorised calendar organisation.
-- 404 NOT_FOUND: missing/hidden request, cross-org decision or an unassigned reviewing manager. No private request details are disclosed.
+- 404 NOT_FOUND: unprovisioned profile, missing/hidden request, cross-org decision or an unassigned reviewing manager. No private request details are disclosed.
 - 409 STATUS_CONFLICT: no longer pending or invalidated policy/type; OVERLAPPING_REQUEST: a conflicting active request found on approval.
 - 422 INSUFFICIENT_BALANCE: allocation no longer covers reservations/approved leave; request stays pending.
 - 500 INTERNAL_ERROR: unexpected database/provider failure; state transaction rolls back and no credentials/internal error is exposed.

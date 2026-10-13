@@ -23,7 +23,19 @@ npm run dev
 
 Open http://localhost:5173. `VITE_API_URL` defaults to `http://localhost:3001`; it is the server origin, without `/api/v1`. The API client appends the prefix exactly once. Use only the Supabase project URL and public anon key; never put a service role key or database credential in a Vite environment variable. `.env` files are ignored locally. The backend must allow the Vite origin in CORS and verify Supabase Bearer tokens from the same project. Accounts, profiles, memberships, leave types and allocations must already be provisioned by the backend; this app does not fabricate them or offer registration.
 
+## Troubleshooting workspace access
+
+Supabase sign-in and the leave API are separate services. After sign-in, Kopano calls `GET http://localhost:3001/api/v1/me` with the session's Bearer token. The workspace requires that endpoint to return the real profile and memberships.
+
+If you see "We cannot reach the leave server", check that the backend is running and that `VITE_API_URL` contains its origin, without `/api/v1`. Restart Vite after changing `.env`. Test the public health endpoint at `http://localhost:3001/api/v1/health`; a successful health response confirms the server is reachable, but does not confirm that `/me` or leave endpoints are implemented.
+
+The backend implements `/me`, organisations and leave types. A missing application profile returns 404; an inactive profile returns 403. Provision real profiles and memberships or use the documented Auth-backed demo accounts. Balances, requests and calendar endpoints remain pending, so their live pages show API errors until those workflows are implemented. See [API implementation status](../docs/API_IMPLEMENTATION.md) and [backend setup](../docs/BACKEND_SETUP.md).
+
+Use `http://localhost:5173` for the frontend: the documented backend CORS default permits that exact origin. `http://127.0.0.1:5173` is a different origin and must also be allowed in the backend's `FRONTEND_ORIGINS` if used. A browser CORS failure can produce the same network-error message even when the backend is running.
+
 ## Implemented flows
+
+For a read-only visual preview during local development, open `http://localhost:5173/preview/dashboard`. It uses explicitly labelled sample data, allows switching between example organisations, and disables submission controls. Preview rendering uses the same balance cards, upcoming leave list and request cards as the live dashboard. It makes no application API calls and is excluded from the production build; the live routes still require authenticated backend data.
 
 - Email/password authentication, session restoration, expiry handling and sign-out. Query caches are cleared when the authenticated identity changes.
 - Organisation selection from active `/me` memberships, with the selected organisation's actual role. Stored selection is only a UI preference and is checked against live memberships.
@@ -67,9 +79,10 @@ Implementation follows [the frontend specification](../docs/KOPANO_FRONTEND_SPEC
 ## Recorded verification — 13 October 2026
 
 - TypeScript check and production build passed.
-- 31 tests passed across 3 files, including the Supabase token-source expiry regression.
+- 32 tests passed across 4 files, including the Supabase token-source expiry regression and development dashboard preview.
 - The real Vite sign-in route returned HTTP 200.
 - Installed Chrome verified the actual rendered sign-in page at 1440px and 390px: no horizontal overflow and no JavaScript runtime exceptions.
 - [Desktop screenshot](screenshots/sign-in-desktop.png), [mobile screenshot](screenshots/sign-in-mobile.png), and [browser verification data](screenshots/verification.json) are included. They show the unconfigured-auth state; they do not claim successful live authentication or backend integration.
+- The read-only dashboard preview was checked at 1440px and 390px with no overflow or runtime exceptions: [desktop](screenshots/dashboard-desktop.png), [mobile](screenshots/dashboard-mobile.png), [verification data](screenshots/dashboard-verification.json). Run `npm run screenshots -- dashboard` to recapture it. Sample preview data is absent from the production bundle.
 
 To recapture sign-in previews, start `npm run dev`, then run `npm run screenshots` in a second terminal. This optional helper requires Node 22+ and installed Chrome or Edge on Windows; set `KOPANO_BROWSER_EXE` for another installed Chromium executable. It uses isolated ignored profiles inside `.preview/` and sends no synthetic identity or application data. `npm run format` and `npm run format:check` maintain the source style.

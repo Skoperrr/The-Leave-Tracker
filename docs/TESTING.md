@@ -105,6 +105,33 @@ Verified on 13 October 2026 on backend/victor:
 
 Key new files are validators/manager.ts, controllers/manager.ts and services/manager.ts. The service shares membership locking and request mapping with employee workflows. Actor/owner locks and fresh role/assignment checks protect decisions; request status, audit and approved event commit together. Calendar selects only name/date/ID fields, never private notes.
 
+## Profile safeguards and dashboard preview integration
+
+On 13 October 2026, a separate checkout based on the latest main preserved the canonical nine-model schema and initial migration, access endpoints and demo-account tooling.
+
+- Backend typecheck and production build passed. Ordinary suite: 70 passed; 9 live database tests skipped because no credentials were copied into that checkout.
+- Five PGlite tests applied the canonical migration in isolated embedded PostgreSQL and verified same-organisation managers, rejection of cross-organisation managers, duplicate memberships, invalid roles and row-level security. No migrations or seeds were run against Supabase for this integration.
+- Access tests additionally verify no-store responses, Bearer challenges, missing-profile 404, empty memberships and response field filtering. Configuration tests cover optional DIRECT_URL and legacy public anon keys.
+- Frontend typecheck and production build passed; 32 tests passed across four files. The temporary checkout was inside the protected `.preview` directory, so its test run used a temporary configuration allowing its own files. That configuration was removed before committing; application protections remain unchanged.
+- Development dashboard preview screenshots at 1440px and 390px record no horizontal overflow or runtime exceptions. The labelled sample preview makes no application API requests; sample strings were absent from the production bundle. See frontend/README.md for artifacts.
+
+These checks do not claim that pending leave endpoints are operational or repeat the earlier live demo-account verification.
+
 ## Remaining leave/core coverage
+
+## Latest main integration verification
+
+On 13 October 2026, merged origin/main's profile safeguards/setup improvements/dashboard preview with the employee and manager leave workflows. Resolved documentation/OpenAPI conflicts while preserving both features; frontend files remain byte-for-byte identical to the fetched main.
+
+- `npm ci` completed with Prisma postinstall generation. The four existing high Prisma tooling audit findings remain reported; no forced dependency rewrite was used.
+- `npm run typecheck` and `npm run build`: passed.
+- `npm test`: 115 local tests passed, including the five incoming embedded PostgreSQL schema/RLS tests; 33 live tests skipped by the ordinary command.
+- `npm run test:database`: 33 live tests passed against the merged code, including decisions, rollback and concurrency.
+- `npm run auth:check:demo`: all six existing demo users passed real sign-in/profile/org isolation after merging response-schema validation, missing-profile 404, no-store and Bearer challenges.
+- OpenAPI parsed with all local references resolved; tracked-file scanning found none of the configured privileged keys/database URLs/passwords/demo passwords in publication content. Local .env and demo credentials remain ignored.
+
+Frontend changes were preserved from main; this merge did not rerun browser screenshots or claim full live UI integration. No repeat approval smoke was run, avoiding duplicate sample submissions on already-approved dates.
+
+## Remaining work after integration
 
 Next implement admin membership/allocation paths with their own permission/concurrency tests, respecting the shared lock convention and resolving documented contract gaps. Verify the full React employee/manager experience with Kopano, review deployment/security, and supply the missing brief before declaring the whole assessment demo ready. Google OAuth/sync/invitation tests follow core verification and provider configuration. Previously documented Prisma tooling audit findings remain unresolved.
