@@ -11,6 +11,28 @@
   --line: #dce3dc;
   --radius: 16px;
 }
+.preview-nav {
+  padding: 13px 15px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #d1ded0;
+  text-align: left;
+  font-size: 0.88rem;
+}
+.preview-banner {
+  margin: 0 0 26px;
+}
+.preview-banner p {
+  margin: 5px 0 0;
+}
+@media (max-width: 760px) {
+  .preview-nav {
+    padding: 10px 7px;
+    text-align: center;
+    font-size: 0.75rem;
+  }
+}
 * {
   box-sizing: border-box;
 }

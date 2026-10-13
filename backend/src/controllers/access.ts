@@ -2,13 +2,14 @@ import type { RequestHandler } from 'express';
 import { authenticatedAccount, requireMembership } from '../middleware/auth.js';
 import type { AccessServices } from '../services/access.js';
 import { ApiError } from '../utils/api-error.js';
+import { meSchema } from '../types/me.js';
 
 export const getMe: RequestHandler = (_request, response) => {
   const account = authenticatedAccount(response);
-  response.json({ data: {
+  response.json({ data: meSchema.parse({
     id: account.id, email: account.email, fullName: account.fullName,
     memberships: account.memberships.map(({ organisationSlug: _slug, ...membership }) => membership),
-  } });
+  }) });
 };
 
 export const getOrganisations: RequestHandler = (_request, response) => {

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useOrganisation } from "../auth/OrganizationProvider";
 import { api } from "../api/endpoints";
 import { allApprovedRequests, useApiQuery } from "../hooks/queries";
-import { today, formatDate } from "../hooks/dates";
+import { today } from "../hooks/dates";
 import {
   EmptyState,
   ErrorNotice,
@@ -11,6 +11,7 @@ import {
   PageHeading,
 } from "../components/ui";
 import { RequestCard } from "../components/RequestCard";
+import { BalanceCards, UpcomingLeaveList } from "../components/DashboardCards";
 export function Dashboard() {
   const { membership, me } = useOrganisation();
   const org = membership.organisationId;
@@ -77,38 +78,10 @@ export function Dashboard() {
             balance is assumed.
           </EmptyState>
         ) : (
-          <div className="balance-grid">
-            {balances.data.data.map((balance) => (
-              <article
-                className="balance-card"
-                key={`${balance.membershipId}-${balance.leaveTypeId}-${balance.year}`}
-              >
-                <p>
-                  {types.data.data.find(
-                    (type) => type.id === balance.leaveTypeId,
-                  )?.name ?? "Leave balance"}
-                </p>
-                <div className="balance-number">
-                  {balance.remainingDays}
-                  <span>days remaining</span>
-                </div>
-                <dl>
-                  <div>
-                    <dt>Allocated</dt>
-                    <dd>{balance.allocatedDays}</dd>
-                  </div>
-                  <div>
-                    <dt>Approved</dt>
-                    <dd>{balance.approvedDays}</dd>
-                  </div>
-                  <div>
-                    <dt>Pending</dt>
-                    <dd>{balance.pendingDays}</dd>
-                  </div>
-                </dl>
-              </article>
-            ))}
-          </div>
+          <BalanceCards
+            balances={balances.data.data}
+            leaveTypes={types.data.data}
+          />
         )}
         <p className="caption">
           Pending requests reserve days. Balances are provided by your
@@ -134,23 +107,7 @@ export function Dashboard() {
             Your approved time away will appear here.
           </EmptyState>
         ) : (
-          <ul className="upcoming-list">
-            {upcoming.map((request) => (
-              <li key={request.id}>
-                <span className="upcoming-day" aria-hidden="true">
-                  {request.startDate.slice(8)}
-                </span>
-                <div>
-                  <strong>{request.leaveTypeName}</strong>
-                  <p>
-                    {formatDate(request.startDate)} —{" "}
-                    {formatDate(request.endDate)}
-                  </p>
-                </div>
-                <span>{request.workingDays} working days · Approved</span>
-              </li>
-            ))}
-          </ul>
+          <UpcomingLeaveList requests={upcoming} />
         )}
       </section>
       <section aria-labelledby="recent-heading">

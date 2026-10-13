@@ -20,7 +20,7 @@ Input middleware is ready for future endpoint schemas: handlers use parsed `resp
 
 ## Implemented access endpoints
 
-All require `Authorization: Bearer <Supabase access token>`. The backend calls Supabase getUser(token), then queries PostgreSQL by that verified identity ID. A missing/inactive application profile returns 403 FORBIDDEN; profiles/memberships must be provisioned by the future safe Auth-backed seed/admin process. No role/user supplied by the browser is trusted.
+All require `Authorization: Bearer <Supabase access token>`. The backend calls Supabase getUser(token), then queries PostgreSQL by that verified identity ID. A missing application profile returns 404 NOT_FOUND; an inactive profile returns 403 FORBIDDEN. Provision profiles/memberships through the documented Auth-backed seed or a trusted administrator. No role/user supplied by the browser is trusted. Protected responses use `Cache-Control: no-store`; 401 responses include the Bearer authentication challenge.
 
 | Method/path | Input/roles | Response |
 |---|---|---|
@@ -28,7 +28,7 @@ All require `Authorization: Bearer <Supabase access token>`. The backend calls S
 | GET `/api/v1/organisations` | Active profile; no body/query required | 200 `{data:[{id,name,slug}]}` from own active memberships only |
 | GET `/api/v1/organisations/:orgId/leave-types` | Active EMPLOYEE/MANAGER/ADMIN membership; UUID path | 200 `{data:[{id,organisationId,code,name}]}`; active leave types only |
 
-Error responses: 400 VALIDATION_ERROR for an invalid organisation UUID; 401 UNAUTHENTICATED for missing/malformed/rejected tokens; 403 FORBIDDEN for unavailable profile, or ORGANISATION_MEMBERSHIP_REQUIRED for an unauthorised organisation; safe 500 INTERNAL_ERROR for provider/database outages. Membership is checked before the leave-type query. Profile and role data come from database records, not JWT user metadata.
+Error responses: 400 VALIDATION_ERROR for an invalid organisation UUID; 401 UNAUTHENTICATED for missing/malformed/rejected tokens; 404 NOT_FOUND for an unprovisioned profile; 403 FORBIDDEN for an inactive profile, or ORGANISATION_MEMBERSHIP_REQUIRED for an unauthorised organisation; safe 500 INTERNAL_ERROR for provider/database outages. Membership is checked before the leave-type query. Profile and role data come from database records, not JWT user metadata.
 
 ```ts
 const response = await fetch(`${apiUrl}/api/v1/me`, {
@@ -71,4 +71,4 @@ export async function getHealth(apiUrl = 'http://localhost:3001'): Promise<Healt
 }
 ```
 
-See COLLABORATION.md for the future authenticated integration sequence. There is no React application to test in this checkout; HTTP CORS tests are not a completed browser integration test.
+See COLLABORATION.md for the authenticated integration sequence and frontend/README.md for browser verification. HTTP CORS tests alone do not establish a completed live leave-workflow integration.

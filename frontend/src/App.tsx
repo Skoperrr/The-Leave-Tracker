@@ -1,4 +1,10 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import {
+  Component,
+  lazy,
+  Suspense,
+  type ErrorInfo,
+  type ReactNode,
+} from "react";
 import { Link, Route, Routes } from "react-router-dom";
 import { RequireAuth, RequireRole } from "./auth/Guards";
 import { AppLayout } from "./layouts/AppLayout";
@@ -9,6 +15,10 @@ import { MyRequests } from "./pages/MyRequests";
 import { ManagerInbox } from "./pages/ManagerInbox";
 import { Calendar } from "./pages/Calendar";
 import { Admin } from "./pages/Admin";
+import { Loading } from "./components/ui";
+const DashboardPreview = import.meta.env.DEV
+  ? lazy(() => import("./dev/DashboardPreview"))
+  : null;
 export class ErrorBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }
@@ -46,6 +56,16 @@ export class ErrorBoundary extends Component<
 export function App() {
   return (
     <Routes>
+      {DashboardPreview && (
+        <Route
+          path="/preview/dashboard"
+          element={
+            <Suspense fallback={<Loading label="Loading dashboard preview" />}>
+              <DashboardPreview />
+            </Suspense>
+          }
+        />
+      )}
       <Route path="/sign-in" element={<SignIn />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>

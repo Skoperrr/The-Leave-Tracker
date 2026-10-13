@@ -13,6 +13,13 @@ describe('database configuration', () => {
   it('accepts complete server configuration', () => {
     expect(readDatabaseEnvironment(configuration)).toEqual(configuration);
   });
+  it('uses the runtime connection when no separate migration URL is supplied', () => {
+    const { DIRECT_URL: _direct, ...settings } = configuration;
+    expect(readDatabaseEnvironment(settings).DIRECT_URL).toBe(configuration.DATABASE_URL);
+  });
+  it('supports a legacy public key with an empty publishable-key placeholder', () => {
+    expect(readDatabaseEnvironment({ ...configuration, SUPABASE_PUBLISHABLE_KEY: '', SUPABASE_ANON_KEY: 'legacy_public_test_key_only' }).SUPABASE_PUBLISHABLE_KEY).toBe('legacy_public_test_key_only');
+  });
   it.each(['DATABASE_URL', 'DIRECT_URL', 'SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY'])('requires %s', (key) => {
     expect(() => readDatabaseEnvironment({ ...configuration, [key]: '' })).toThrow(key);
   });

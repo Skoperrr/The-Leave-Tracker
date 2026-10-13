@@ -1,0 +1,25 @@
+{
+  "route": "/preview/dashboard",
+  "views": [
+    {
+      "view": "desktop",
+      "viewportWidth": 1440,
+      "contentWidth": 1440,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false
+    },
+    {
+      "view": "mobile",
+      "viewportWidth": 390,
+      "contentWidth": 390,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false
+    }
+  ],
+  "browserExceptions": 0,
+  "note": "Live backend flows require configured Supabase credentials and the Express API."
+}

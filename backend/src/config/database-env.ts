@@ -10,10 +10,20 @@ const postgresUrl = z.string().refine((value) => {
 
 const schema = z.object({
   DATABASE_URL: postgresUrl,
-  DIRECT_URL: postgresUrl,
+  DIRECT_URL: postgresUrl.optional(),
   SUPABASE_URL: z.string().url().refine((value) => value.startsWith('https://')),
-  SUPABASE_PUBLISHABLE_KEY: z.string().min(20),
-});
+  SUPABASE_PUBLISHABLE_KEY: z.preprocess(value => value === '' ? undefined : value, z.string().min(20).optional()),
+  SUPABASE_ANON_KEY: z.string().min(20).optional(),
+}).superRefine((value, context) => {
+  if (!value.SUPABASE_PUBLISHABLE_KEY && !value.SUPABASE_ANON_KEY) {
+    context.addIssue({ code: 'custom', path: ['SUPABASE_PUBLISHABLE_KEY'], message: 'A public Supabase project key is required' });
+  }
+}).transform(value => ({
+  DATABASE_URL: value.DATABASE_URL,
+  DIRECT_URL: value.DIRECT_URL ?? value.DATABASE_URL,
+  SUPABASE_URL: value.SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY: value.SUPABASE_PUBLISHABLE_KEY ?? value.SUPABASE_ANON_KEY!,
+}));
 
 export function readDatabaseEnvironment(input: NodeJS.ProcessEnv = process.env) {
   const result = schema.safeParse(input);

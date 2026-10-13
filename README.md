@@ -31,9 +31,9 @@ npm run build
 npm start
 ```
 
-The build generates Prisma Client and requires local DIRECT_URL configuration in .env. Database tooling: `npm run db:validate`, `npm run db:generate`, `npm run db:check`. `test:database` connects to your configured development database; each fixture transaction rolls back. See setup before running migrations or seeds.
+The build generates Prisma Client without requiring database credentials. Database tooling: `npm run db:validate`, `npm run db:generate`, `npm run db:check`. Migration commands use optional DIRECT_URL, falling back to DATABASE_URL. `test:database` connects to your configured development database; each fixture transaction rolls back. See setup before running migrations or seeds.
 
-Use Node 22.12+ in the 22 LTS line or Node 24 LTS. Express handles HTTP; strict TypeScript checks code contracts; Zod validates configuration and input; Vitest and Supertest verify behaviour. Phase 3 will add Prisma for relational PostgreSQL data and Supabase Auth for verified identities. The frontend remains independently runnable and has not been created or modified here.
+Use Node 22.12+ in the 22 LTS line or Node 24 LTS. Express handles HTTP; strict TypeScript checks code contracts; Zod validates configuration and input; Vitest and Supertest verify behaviour. Prisma handles PostgreSQL data and Supabase Auth verifies identities. Run the frontend with `npm --prefix frontend run dev` and open `http://localhost:5173`. The development-only read-only dashboard preview is at `/preview/dashboard`; see [frontend setup and verification](frontend/README.md).
 
 Read [implementation plan](docs/IMPLEMENTATION_PLAN.md), [setup](docs/BACKEND_SETUP.md), [API implementation](docs/API_IMPLEMENTATION.md), [database design](docs/DATABASE_DESIGN.md), [test evidence](docs/TESTING.md), and [collaboration/integration](docs/COLLABORATION.md). The [shared API contract](docs/SHARED_API_CONTRACT.md) defines endpoint names and JSON shapes. [OpenAPI](backend/openapi.yaml) describes currently implemented endpoints.
 

@@ -1,5 +1,5 @@
 // Local browser QA only. Requires Node 22+ and installed Chrome or Edge.
-// Start Vite first. Credentials and application data are never mocked here.
+// Start Vite first. Captures the served page, including labelled dashboard fixtures.
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -13,7 +13,13 @@ const browserPath = [
 ].find((path) => path && existsSync(path));
 if (!browserPath)
   throw new Error("Set KOPANO_BROWSER_EXE to an installed Chromium browser.");
-const url = "http://127.0.0.1:5173/sign-in";
+const dashboard = process.argv[2] === "dashboard";
+const route = dashboard ? "/preview/dashboard" : "/sign-in";
+const screenshotName = dashboard ? "dashboard" : "sign-in";
+const readyExpression = dashboard
+  ? 'Boolean(document.querySelector(".preview-banner") && document.querySelector(".balance-number"))'
+  : 'Boolean(document.querySelector("#email") && document.querySelector("#password"))';
+const url = `http://127.0.0.1:5173${route}`;
 if (!(await fetch(url)).ok)
   throw new Error("Start npm run dev before capturing screenshots.");
 const profile = resolve(root, ".preview", "qa-browser-" + process.pid);
@@ -103,8 +109,7 @@ try {
     let ready = false;
     for (let attempt = 0; attempt < 100; attempt++) {
       const result = await send("Runtime.evaluate", {
-        expression:
-          'Boolean(document.querySelector("#email") && document.querySelector("#password"))',
+        expression: readyExpression,
         returnByValue: true,
       });
       if (result.result.value) {
@@ -113,7 +118,7 @@ try {
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    if (!ready) throw new Error("The sign-in form did not render.");
+    if (!ready) throw new Error("The requested preview did not render.");
     await send("Runtime.evaluate", {
       expression:
         "Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))])",
@@ -122,7 +127,7 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
     const result = await send("Runtime.evaluate", {
       expression:
-        '({ viewportWidth: innerWidth, contentWidth: document.documentElement.scrollWidth, formVisible: Boolean(document.querySelector("#email")), configurationRequired: document.body.innerText.includes("Authentication is not configured") })',
+        '({ viewportWidth: innerWidth, contentWidth: document.documentElement.scrollWidth, formVisible: Boolean(document.querySelector("#email")), dashboardVisible: Boolean(document.querySelector(".balance-number")), sampleDataLabel: document.body.innerText.includes("Read-only preview"), configurationRequired: document.body.innerText.includes("Authentication is not configured") })',
       returnByValue: true,
     });
     const dimensions = result.result.value;
@@ -146,7 +151,7 @@ try {
       },
     });
     await writeFile(
-      resolve(output, `sign-in-${view.name}.png`),
+      resolve(output, `${screenshotName}-${view.name}.png`),
       Buffer.from(screenshot.data, "base64"),
     );
     evidence.push({ view: view.name, ...dimensions });
@@ -154,10 +159,13 @@ try {
   if (exceptions.length)
     throw new Error(`Browser exceptions: ${exceptions.join(", ")}`);
   await writeFile(
-    resolve(output, "verification.json"),
+    resolve(
+      output,
+      dashboard ? "dashboard-verification.json" : "verification.json",
+    ),
     JSON.stringify(
       {
-        route: "/sign-in",
+        route,
         views: evidence,
         browserExceptions: exceptions.length,
         note: "Live backend flows require configured Supabase credentials and the Express API.",

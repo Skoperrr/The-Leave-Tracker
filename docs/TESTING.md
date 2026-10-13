@@ -71,6 +71,18 @@ On 13 October 2026, the locally configured privileged Supabase key passed a read
 
 This supersedes the earlier pending-real-sign-in statement. Leave requests/approvals/calendars and Google integration remain unimplemented. The previously recorded Prisma tooling audit findings remain unresolved.
 
+## Profile safeguards and dashboard preview integration
+
+On 13 October 2026, a separate checkout based on the latest main preserved the canonical nine-model schema and initial migration, access endpoints and demo-account tooling.
+
+- Backend typecheck and production build passed. Ordinary suite: 70 passed; 9 live database tests skipped because no credentials were copied into that checkout.
+- Five PGlite tests applied the canonical migration in isolated embedded PostgreSQL and verified same-organisation managers, rejection of cross-organisation managers, duplicate memberships, invalid roles and row-level security. No migrations or seeds were run against Supabase for this integration.
+- Access tests additionally verify no-store responses, Bearer challenges, missing-profile 404, empty memberships and response field filtering. Configuration tests cover optional DIRECT_URL and legacy public anon keys.
+- Frontend typecheck and production build passed; 32 tests passed across four files. The temporary checkout was inside the protected `.preview` directory, so its test run used a temporary configuration allowing its own files. That configuration was removed before committing; application protections remain unchanged.
+- Development dashboard preview screenshots at 1440px and 390px record no horizontal overflow or runtime exceptions. The labelled sample preview makes no application API requests; sample strings were absent from the production bundle. See frontend/README.md for artifacts.
+
+These checks do not claim that pending leave endpoints are operational or repeat the earlier live demo-account verification.
+
 ## Remaining leave/core coverage
 
 Next add weekdays/date validation, insufficient balance, overlap and duplicate submissions; pending/approved/cancelled balance calculations; approval/decline, missing comments, assigned-team authority, self-approval and duplicate/concurrent decisions; approved-only calendars and independent multi-organisation approvals. Existing token/access tests cover the completed milestone, but new mutation paths still need permission tests. PostgreSQL integration tests must cover actual transactions/concurrency. Add real frontend-auth-to-backend smoke evidence with Kopano before declaring the demo ready.

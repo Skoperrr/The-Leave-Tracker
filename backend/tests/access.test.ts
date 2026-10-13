@@ -28,17 +28,22 @@ function setup(account: Account | null = profile) {
 
 describe('authenticated access endpoints (provider mocked)', () => {
   it.each([undefined, 'Basic abc', 'Bearer', 'Bearer invalid', 'Bearer two tokens'])('rejects absent or invalid authentication: %s', async (header) => {
-    const { app } = setup();
+    const { app, verifyToken, repository } = setup();
     const query = request(app).get('/api/v1/me');
     if (header) query.set('Authorization', header);
     const response = await query;
     expect(response.status).toBe(401);
     expect(response.body.error.code).toBe('UNAUTHENTICATED');
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.headers['www-authenticate']).toBe('Bearer');
+    expect(repository.findAccount).not.toHaveBeenCalled();
+    if (header !== 'Bearer invalid') expect(verifyToken).not.toHaveBeenCalled();
   });
   it('returns the exact profile/membership shape from the verified identity', async () => {
     const { app, repository } = setup();
     const response = await request(app).get('/api/v1/me').set('Authorization', 'Bearer verified-token');
     expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toBe('no-store');
     expect(response.body).toEqual({ data: {
       id: profile.id, email: profile.email, fullName: profile.fullName,
       memberships: profile.memberships.map(({ organisationSlug: _slug, ...membership }) => membership),
@@ -51,7 +56,26 @@ describe('authenticated access endpoints (provider mocked)', () => {
     expect(response.body.data.id).toBe(profile.id);
     expect(repository.findAccount).toHaveBeenCalledWith(profile.id);
   });
-  it.each([null, { ...profile, active: false }])('requires an active database profile', async (account) => {
+  it('reports an unprovisioned profile clearly', async () => {
+    const response = await request(setup(null).app).get('/api/v1/me').set('Authorization', 'Bearer verified-token');
+    expect(response.status).toBe(404);
+    expect(response.body.error.code).toBe('NOT_FOUND');
+  });
+  it('allows an active profile with no memberships', async () => {
+    const response = await request(setup({ ...profile, memberships: [] }).app)
+      .get('/api/v1/me').set('Authorization', 'Bearer verified-token');
+    expect(response.status).toBe(200);
+    expect(response.body.data.memberships).toEqual([]);
+  });
+  it('strips fields outside the shared membership contract', async () => {
+    const account = { ...profile, memberships: profile.memberships.map(membership => ({ ...membership, internalNote: 'private' })) };
+    const response = await request(setup(account).app).get('/api/v1/me').set('Authorization', 'Bearer verified-token');
+    expect(response.status).toBe(200);
+    expect(response.body.data.memberships[0]).not.toHaveProperty('internalNote');
+    expect(response.body.data.memberships[0]).not.toHaveProperty('organisationSlug');
+    expect(response.body.data).not.toHaveProperty('active');
+  });
+  it.each([{ ...profile, active: false }])('requires an active database profile', async (account) => {
     const response = await request(setup(account).app).get('/api/v1/me').set('Authorization', 'Bearer verified-token');
     expect(response.status).toBe(403);
     expect(response.body.error.code).toBe('FORBIDDEN');
