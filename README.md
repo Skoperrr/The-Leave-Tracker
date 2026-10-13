@@ -2,14 +2,14 @@
 
 Leave management for the D-Lab Blitz assessment, built by Victor (backend) and Kopano (React + Vite frontend). The planned system supports employees, managers and administrators across D-Lab, StrideShift Global and The Field Institute, with separate balances and approvals for each organisation.
 
-**Current milestone: connected database and implemented access endpoints.** Prisma's initial migration has been applied; three demo organisations and annual/sick types are seeded. Health, /me, /organisations and organisation leave types use token verification and membership checks. Six fictional Auth accounts now have profiles, organisation roles and 2026 allocations; see [demo accounts](docs/DEMO_ACCOUNTS.md). Leave workflows and calendars remain pending. Google's shared-calendar/invitation extension is proposed for after core verification. This is not yet a demonstration-ready leave system. The original assessment PDF is missing.
+**Current milestone: employee and manager leave workflows plus internal calendars implemented.** Access routes verify Supabase tokens/memberships. Employee requests persist with weekday calculations, reservations, overlap protection and atomic multi-org submission. Assigned managers or org admins approve/decline; approvals commit audit and one organisation calendar event together. Real demo sign-in and independent multi-org approvals have been verified. Admin APIs, full browser integration and Google integration remain pending. See [demo accounts](docs/DEMO_ACCOUNTS.md). The full assessment definition of done is not complete; the assessment PDF is still missing.
 
 From the repository root:
 
 ```sh
 cd backend
 npm ci
-cp .env.example .env
+cp -n .env.example .env
 npm run dev
 ```
 
@@ -33,7 +33,7 @@ npm start
 
 The build generates Prisma Client and requires local DIRECT_URL configuration in .env. Database tooling: `npm run db:validate`, `npm run db:generate`, `npm run db:check`. `test:database` connects to your configured development database; each fixture transaction rolls back. See setup before running migrations or seeds.
 
-Use Node 22.12+ in the 22 LTS line or Node 24 LTS. Express handles HTTP; strict TypeScript checks code contracts; Zod validates configuration and input; Vitest and Supertest verify behaviour. Phase 3 will add Prisma for relational PostgreSQL data and Supabase Auth for verified identities. The frontend remains independently runnable and has not been created or modified here.
+Use Node 22.12+ in the 22 LTS line or Node 24 LTS. Express handles HTTP; strict TypeScript checks code contracts; Zod validates input; Vitest/Supertest verify behaviour. Prisma handles PostgreSQL persistence; Supabase Auth verifies identity. Kopano's frontend remains independently runnable and unchanged by these backend changes.
 
 Read [implementation plan](docs/IMPLEMENTATION_PLAN.md), [setup](docs/BACKEND_SETUP.md), [API implementation](docs/API_IMPLEMENTATION.md), [database design](docs/DATABASE_DESIGN.md), [test evidence](docs/TESTING.md), and [collaboration/integration](docs/COLLABORATION.md). The [shared API contract](docs/SHARED_API_CONTRACT.md) defines endpoint names and JSON shapes. [OpenAPI](backend/openapi.yaml) describes currently implemented endpoints.
 

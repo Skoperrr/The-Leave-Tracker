@@ -71,6 +71,40 @@ On 13 October 2026, the locally configured privileged Supabase key passed a read
 
 This supersedes the earlier pending-real-sign-in statement. Leave requests/approvals/calendars and Google integration remain unimplemented. The previously recorded Prisma tooling audit findings remain unresolved.
 
+## Phase 5 employee leave milestone
+
+Verified on 13 October 2026, on backend/victor:
+
+| Command/check | Result |
+|---|---|
+| `npm run typecheck` | Passed, including source, scripts and tests |
+| `npm run build` | Passed, Prisma Client generated and compiled server emitted |
+| `npm test` | 94 passed; 21 live tests skipped by the ordinary command |
+| `npm run test:database` | 21 passed: 9 existing database tests and 12 employee workflow tests |
+| `npm run leave:check:demo` | Passed with Ayanda's real Supabase login; two linked five-day reservations, independent cancellation and both balances restored |
+| OpenAPI YAML/reference check | Parsed successfully; all local references resolved across seven path entries |
+| `git diff --check` | Passed; frontend/shared API contract unchanged |
+
+The live suite exercises actual Express/controllers/services/Prisma/PostgreSQL; only token verification is mocked for temporary fixture users. It verifies persistence, five-weekday duration, pending/approved/cancelled/declined balance accounting, independent linked children, rollback on insufficient balance, cross-organisation access, private paginated history, other-owner cancellation hiding, overlapping types, invalid/cross-year/weekend ranges, concurrent non-overlapping overspending prevention, reversed multi-org lock ordering and simultaneous cancellations with one audit. Temporary fixture IDs are cleaned up; demo accounts are preserved.
+
+The real-token smoke uses ordinary Supabase sign-in, not the service-role key. It leaves two CANCELLED demonstration requests and their audit records; no pending reservation or approved calendar event remains. It is separate from browser React integration and should run only on the demo project. Existing active leave on the smoke dates may cause an intentional overlap rejection.
+
+Initial runs exposed a pg deprecation warning from concurrent queries on a transaction connection. Balance and related-record queries now run in sequential batches, avoiding per-request-row relation lookups. The full 21-test live suite was rerun successfully after the change with no such warning emitted. Manager decisions/internal calendars remain pending; approved/declined records in balance tests are fixture state, not a verified manager approval API. Existing Prisma tooling audit findings remain unchanged.
+
+Key files: validators/leave.ts validates HTTP fields; utils/dates.ts computes date-only weekdays; repositories/leave.ts sets transaction isolation, locks memberships, aggregates usage and maps response data; services/leave.ts applies leave rules and coordinates transactional writes; controllers/leave.ts handles the API envelope/status. Routes bind the four exact contract paths.
+
+## Manager decisions and internal calendar milestone
+
+Verified on 13 October 2026 on backend/victor:
+
+- `npm test`: 106 local tests passed; 33 live database tests skipped by the ordinary command. Added decision/body/query validation and protected manager/calendar route tests.
+- `npm run test:database`: all 33 live PostgreSQL tests passed. This includes the prior 21 tests plus 12 manager/calendar tests covering approval metadata/audit/event, decline comment/reservation release, assigned team and org admin queue/history, self/cross-org decisions, approved-only privacy-safe calendars with inclusive boundaries, independent linked approvals, two simultaneous approvals, approval versus decline/cancellation races, allocation revalidation and rollback on audit/calendar persistence failure.
+- `npm run manager:check:demo`: real Supabase sign-in passed for Ayanda, Thabo, Lerato and Neo. Thabo approved only D-Lab, then Lerato approved only Field Institute; each calendar displayed only its own approved event. StrideShift was denied both calendars. Duplicate approval returned 409, missing decline comment returned 400, and a valid decline created no event.
+- The real smoke preserves two approved child requests/events and one declined request. Approved leave consumes five annual days per selected organisation; no pending smoke reservation remains. These are intentional fictional demonstration records, not temporary test fixtures. No external Google event/invitation was created.
+- OpenAPI YAML parsed successfully with every local reference resolved across ten paths. Shared API contract and frontend files are unchanged. No schema migration was required.
+
+Key new files are validators/manager.ts, controllers/manager.ts and services/manager.ts. The service shares membership locking and request mapping with employee workflows. Actor/owner locks and fresh role/assignment checks protect decisions; request status, audit and approved event commit together. Calendar selects only name/date/ID fields, never private notes.
+
 ## Remaining leave/core coverage
 
-Next add weekdays/date validation, insufficient balance, overlap and duplicate submissions; pending/approved/cancelled balance calculations; approval/decline, missing comments, assigned-team authority, self-approval and duplicate/concurrent decisions; approved-only calendars and independent multi-organisation approvals. Existing token/access tests cover the completed milestone, but new mutation paths still need permission tests. PostgreSQL integration tests must cover actual transactions/concurrency. Add real frontend-auth-to-backend smoke evidence with Kopano before declaring the demo ready.
+Next implement admin membership/allocation paths with their own permission/concurrency tests, respecting the shared lock convention and resolving documented contract gaps. Verify the full React employee/manager experience with Kopano, review deployment/security, and supply the missing brief before declaring the whole assessment demo ready. Google OAuth/sync/invitation tests follow core verification and provider configuration. Previously documented Prisma tooling audit findings remain unresolved.

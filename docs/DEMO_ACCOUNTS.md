@@ -32,7 +32,7 @@ Auth creation and PostgreSQL updates cannot share one transaction. A partial fai
 
 ## Fictional allocation policy
 
-Every demo membership has 15 annual and 10 sick days allocated for policy year 2026. These amounts are made-up demonstration values, not South African legal guidance or official organisation policies. Future balances derive reservations/usage from requests; they must not subtract allocations twice. The seed does not yet create requests, decisions or calendar events; those belong to the next tested leave-workflow milestone.
+Every demo membership has 15 annual and 10 sick days allocated for policy year 2026. These amounts are made-up demonstration values, not legal guidance or official HR policy. Balances derive pending/approved usage without double deduction. The account seed creates no requests/decisions/events. leave:check:demo creates/cancels linked requests; manager:check:demo now preserves approved and declined samples plus organisation-specific events. After the verified manager smoke, Ayanda has five approved annual days in each organisation, ten remaining, and no smoke pending reservations. Seed reruns preserve these decisions and usage.
 
 ## Real sign-in verification
 

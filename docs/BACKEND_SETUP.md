@@ -52,7 +52,7 @@ The frontend uses its own public Supabase project settings for browser sign-in a
 - Startup configuration failure: check the named field in `.env`.
 - Listen failure: check whether port 3001 is occupied or the environment restricts sockets; choose a free PORT.
 - 403 from a browser: ensure its exact origin is in FRONTEND_ORIGINS.
-- `/me` is implemented: absent/invalid tokens give 401; a valid identity without an active provisioned database profile gives 403. Leave endpoints remain pending and return 404 after authentication.
+- Access, employee leave, manager queue/decision and calendar routes are implemented: absent/invalid tokens give 401; an unavailable profile gives 403. Admin/Google endpoints remain pending and return 404 after authentication.
 - Health succeeds but login/database do not: health currently checks process liveness only.
 
 ## Authentication milestone
@@ -60,3 +60,13 @@ The frontend uses its own public Supabase project settings for browser sign-in a
 The configured Supabase project/public key responds successfully. GET /me verifies a token through getUser(token); matching active database profiles/memberships determine access. Tokens are never accepted by merely decoding JWT payloads. User metadata is not a role source. Fictional Auth-backed accounts are now provisioned; there is no self-service role assignment. Keep privileged Auth-seed credentials server-only. `npm run auth:check:demo` verifies real sign-in and access isolation without printing credentials.
 
 Google remains a later milestone. See GOOGLE_WORKSPACE_INTEGRATION.md for proposed contract changes and manual Cloud setup; none of its settings are required by current access endpoints.
+
+## Phase 5 verification
+
+Run typecheck, test, test:database and build inside backend. `npm run leave:check:demo` signs in Ayanda, submits five weekdays across both organisations, verifies reservations, independently cancels children and verifies restored balances. It preserves two CANCELLED history records and their audits; it does not delete history or create approved events. Free dates/balance are required for 2–6 November 2026. Use only the development demo project.
+
+## Manager/calendar smoke
+
+`npm run manager:check:demo` signs in Ayanda, Thabo, Lerato and Neo using local credentials. It submits 16–20 November 2026 in D-Lab and Field Institute, approves each independently, checks calendar isolation/duplicate decisions and declines another D-Lab request for 23–24 November. It preserves two APPROVED requests/internal events and one DECLINED request. Those approved five days now consume each fictional annual allocation. If the smoke fails, pending children are cancelled; successful approvals are preserved. It sends no Google invitations.
+
+This smoke ran successfully. It intentionally needs free dates/balance; repeating it on the same approved dates will return an overlap conflict rather than duplicating events. Use existing history/calendar to review completed sample approvals. Production execution is rejected.

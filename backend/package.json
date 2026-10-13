@@ -18,9 +18,11 @@
     "db:check": "tsx --env-file=.env src/scripts/check-database.ts",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "test:database": "node --env-file=.env node_modules/vitest/vitest.mjs run tests/database.integration.test.ts",
+    "test:database": "node --env-file=.env node_modules/vitest/vitest.mjs run tests/database.integration.test.ts tests/leave.integration.test.ts",
     "db:seed:accounts": "tsx --env-file=.env prisma/seed-accounts.ts",
-    "auth:check:demo": "tsx --env-file=.env src/scripts/check-demo-auth.ts"
+    "auth:check:demo": "tsx --env-file=.env src/scripts/check-demo-auth.ts",
+    "leave:check:demo": "tsx --env-file=.env src/scripts/check-demo-leave.ts",
+    "manager:check:demo": "tsx --env-file=.env src/scripts/check-demo-manager.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

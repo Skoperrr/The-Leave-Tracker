@@ -38,3 +38,11 @@ Successful payloads are wrapped in data; pagination uses meta. Handle 401 by ask
 Admin allocation discovery, admin response shapes and audit visibility require agreement before the admin phase. No change to SHARED_API_CONTRACT.md was made at this milestone.
 
 The requested Google shared-calendar/invitation expansion is proposed in GOOGLE_WORKSPACE_INTEGRATION.md. Its routes/page are not operational. Review the callback state authentication exception, writable-calendar selection endpoint and notification-email policy before frontend work. Core leave workflows must pass first; no frontend files were modified.
+
+## Phase 5 integration
+
+Balances, submission/history and pending cancellation match existing api.balances/createRequest/requests/cancelRequest methods. Shared field names/envelopes are unchanged. Use real UUIDs. Multi-org submission returns groupId and separate children; show each status and refetch balance/history after mutations. Backend weekdays are authoritative; pending reserves days; cancelling one child preserves others. Leave ranges stay within one year, weekends excluded, public holidays currently counted.
+
+## Manager/calendar integration
+
+Existing api.managerRequests/decideRequest/calendar methods now have backend implementations. Select the active organisation, then enforce UI role visibility from /me; the backend independently enforces the same role and assigned-team scope. Queue defaults to pending, with other status filters providing team history. Decline comment is required. After a decision refetch queue, employee history/balance and the selected organisation calendar. Calendar fields omit private reason/type/comment. Partial approval shows only the approved organisation's event. Full browser verification remains pending; no frontend components were modified. Admin APIs and Google integration remain pending.
