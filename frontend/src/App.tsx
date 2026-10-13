@@ -78,6 +78,7 @@ export function App() {
           </Route>
           <Route element={<RequireRole roles={["ADMIN"]} />}>
             <Route path="admin" element={<Admin />} />
+            <Route path="admin/approvals" element={<ManagerInbox />} />
           </Route>
           <Route
             path="*"

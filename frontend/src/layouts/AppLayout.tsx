@@ -47,11 +47,16 @@ export function AppLayout() {
             My requests
           </NavLink>
           <NavLink to="/calendar">Team calendar</NavLink>
-          {["MANAGER", "ADMIN"].includes(membership.role) && (
+          {membership.role === "MANAGER" && (
             <NavLink to="/manager">Manager inbox</NavLink>
           )}
           {membership.role === "ADMIN" && (
-            <NavLink to="/admin">Administration</NavLink>
+            <>
+              <NavLink to="/admin/approvals">Leave approvals</NavLink>
+              <NavLink to="/admin" end>
+                Administration
+              </NavLink>
+            </>
           )}
         </nav>
         <div className="sidebar-footer">
@@ -75,7 +80,8 @@ export function AppLayout() {
           <Outlet />
         </main>
         <footer className="app-footer">
-          The Leave Tracker · D-Lab Blitz Day 6 <span>Time away. Peace of mind.</span>
+          The Leave Tracker · D-Lab Blitz Day 6{" "}
+          <span>Time away. Peace of mind.</span>
         </footer>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useOrganisation } from "../auth/OrganizationProvider";
 import { api } from "../api/endpoints";
 import { useApiQuery } from "../hooks/queries";
@@ -20,6 +21,16 @@ export function Admin() {
       <PageHeading eyebrow="ORGANISATION ADMINISTRATION" title="Memberships">
         Roles and memberships for {membership.organisationName}.
       </PageHeading>
+      <section className="panel" aria-labelledby="admin-approvals-heading">
+        <h2 id="admin-approvals-heading">Leave approvals</h2>
+        <p>
+          Review pending leave across {membership.organisationName}. Approve
+          requests or decline them with a comment.
+        </p>
+        <Link className="primary button" to="/admin/approvals">
+          Review leave requests
+        </Link>
+      </section>
       <div className="notice">
         This basic view lists memberships. Allocation and membership editing are
         deferred until the shared contract defines their complete payloads and

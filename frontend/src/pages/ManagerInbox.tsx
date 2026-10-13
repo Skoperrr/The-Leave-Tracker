@@ -15,6 +15,7 @@ import { DecisionForm } from "../components/DecisionForm";
 export function ManagerInbox() {
   const { membership, me } = useOrganisation();
   const org = membership.organisationId;
+  const isAdmin = membership.role === "ADMIN";
   const [status, setStatus] = useState<LeaveStatus | "">("PENDING");
   const [page, setPage] = useState(1);
   const requests = useApiQuery(
@@ -33,9 +34,15 @@ export function ManagerInbox() {
   );
   return (
     <>
-      <PageHeading eyebrow="LOOK AFTER YOUR TEAM" title="Manager inbox">
-        Review leave for {membership.organisationName}. Each organisation's
-        decision is independent.
+      <PageHeading
+        eyebrow={isAdmin ? "ORGANISATION LEAVE REVIEW" : "LOOK AFTER YOUR TEAM"}
+        title={isAdmin ? "Leave approvals" : "Manager inbox"}
+      >
+        {isAdmin
+          ? `Approve or decline leave requests across ${membership.organisationName}, including employees outside your direct team.`
+          : `Review leave for your team at ${membership.organisationName}.`}{" "}
+        Each organisation's decision is independent. You cannot approve your own
+        leave.
       </PageHeading>
       <div className="filters">
         <div>
@@ -60,7 +67,9 @@ export function ManagerInbox() {
         </div>
       </div>
       {requests.isPending ? (
-        <Loading label="Loading manager inbox" />
+        <Loading
+          label={isAdmin ? "Loading leave approvals" : "Loading manager inbox"}
+        />
       ) : requests.isError ? (
         <ErrorNotice
           error={requests.error}

@@ -358,6 +358,44 @@ describe("Frontend integration flows", () => {
       body: { decision: "DECLINE", comment: "Coverage needed" },
     });
   });
+  it("lets admins approve organisation leave through the dedicated approvals page", async () => {
+    profile.memberships = [{ ...dlab, id: "admin-membership", role: "ADMIN" }];
+    requests = [
+      {
+        ...createRequest("r-admin-review", dlab),
+        employeeId: "other-profile",
+        employeeDisplayName: "Ayanda Example",
+      },
+    ];
+    mount("/admin/approvals");
+    expect(
+      await screen.findByRole("heading", { name: "Leave approvals" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Leave approvals" }),
+    ).toHaveAttribute("href", "/admin/approvals");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Approve request" }),
+    );
+    await waitFor(() => expect(requests[0].status).toBe("APPROVED"));
+    expect(calls.find((call) => call.method === "POST")).toMatchObject({
+      path: "/manager/leave-requests/r-admin-review/decision",
+      body: { decision: "APPROVE" },
+    });
+    expect(await screen.findByText("You're all caught up")).toBeInTheDocument();
+  });
+  it("blocks admins from approving their own leave", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    requests = [createRequest("r-own-admin", dlab)];
+    mount("/admin/approvals");
+    expect(
+      await screen.findByText(/You cannot decide your own leave/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Approve request" }),
+    ).not.toBeInTheDocument();
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+  });
   it("blocks self-review before a decision form can submit", async () => {
     profile.memberships = [{ ...dlab, role: "MANAGER" }];
     requests = [createRequest("r-dlab", dlab)];
@@ -369,7 +407,7 @@ describe("Frontend integration flows", () => {
       screen.queryByRole("button", { name: "Approve request" }),
     ).not.toBeInTheDocument();
   });
-  it.each(["/manager", "/admin"])(
+  it.each(["/manager", "/admin", "/admin/approvals"])(
     "guards direct employee navigation to %s without fetching protected resources",
     async (path) => {
       mount(path);
