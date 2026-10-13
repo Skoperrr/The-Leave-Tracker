@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: The Leave Tracker API — implemented foundation
+  version: 0.1.0
+  description: Only health is operational. Pending endpoints remain defined by docs/SHARED_API_CONTRACT.md.
+servers:
+  - url: http://localhost:3001/api/v1
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: API process liveness (does not check database or authentication)
+      security: []
+      responses:
+        '200':
+          description: API is responding
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [status]
+                    properties:
+                      status:
+                        type: string
+                        enum: [ok]
+              example:
+                data:
+                  status: ok
+        '403':
+          description: Browser origin is outside the configured allowlist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, details]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
