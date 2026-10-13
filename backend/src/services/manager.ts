@@ -2,6 +2,7 @@ import { activeMemberships, balanceUsage, loadRequests, lockMembershipIds, reque
 import type { ManagerQuery, Decision, CalendarQuery } from '../validators/manager.js';
 import { calculateWorkingDays, parseDateOnly } from '../utils/dates.js';
 import { ApiError } from '../utils/api-error.js';
+import { enqueueCalendarEvent } from './calendar-integration.js';
 
 export function createManagerService(repository: LeaveRepository) {
   return {
@@ -60,9 +61,12 @@ export function createManagerService(repository: LeaveRepository) {
         if (!updated.count) throw new ApiError(409, 'STATUS_CONFLICT', 'This request is no longer pending');
         await transaction.auditLog.create({ data: { actorUserId, organisationId: request.organisationId, action: `REQUEST_${status}`,
           entityType: 'LeaveRequest', entityId: id, metadata: { previousStatus: 'PENDING' } } });
-        if (status === 'APPROVED') await transaction.calendarEvent.upsert({ where: { requestId: id }, update: {
+        if (status === 'APPROVED') {
+          const event = await transaction.calendarEvent.upsert({ where: { requestId: id }, update: {
           active: true, startDate: request.startDate, endDate: request.endDate, visibility: 'ORGANISATION',
-        }, create: { organisationId: request.organisationId, requestId: id, startDate: request.startDate, endDate: request.endDate } });
+          }, create: { organisationId: request.organisationId, requestId: id, startDate: request.startDate, endDate: request.endDate } });
+          await enqueueCalendarEvent(transaction, event);
+        }
         const stored = await transaction.leaveRequest.findUniqueOrThrow({ where: { id } });
         return requestDto((await loadRequests(transaction, [stored]))[0]!);
       });

@@ -1,6 +1,6 @@
 # API implementation status
 
-The shared contract is unchanged. API prefix: `/api/v1`. Backend default: `http://localhost:3001`. Health, three access endpoints, four employee leave endpoints, manager queue/decision, internal calendar and admin membership listing are implemented. Pending admin editing/Google paths return 401 without auth and 404 after successful auth. Google endpoints are proposed separately and are not operational.
+The shared v1 contract file is unchanged; the backend additions are documented in EMAIL_CALENDAR_BACKEND_HANDOFF.md and OpenAPI 0.6 for Kopano coordination. API prefix: `/api/v1`. Core access/leave/manager/internal-calendar and admin listing remain implemented. Confirmed email profile bootstrap, scoped EMPLOYEE assignment and initial allocation creation are implemented. Calendar OAuth/status/settings/test/retry/disconnect and scheduler endpoints are implemented but external Google use returns GOOGLE_NOT_CONFIGURED until server credentials are set. Existing membership/allocation PATCH editing remains pending. No live Google invitation delivery is claimed.
 
 ## Implemented endpoint
 
@@ -158,3 +158,8 @@ const calendar = await api.calendar(organisationId, '2026-11-01', '2026-11-30');
 ```
 
 Overlapping team absences can be identified from event date ranges in this calendar response; no incompatible overlap endpoint/field was added. These are internal events only. No Google sync job/event/invitation exists yet.
+
+
+## Email/calendar backend extension
+
+See [EMAIL_CALENDAR_BACKEND_HANDOFF.md](EMAIL_CALENDAR_BACKEND_HANDOFF.md) for exact signup/bootstrap, scoped admin assignment, Google connection/settings and scheduler contracts, including the state/cookie-authenticated OAuth callback and server-secret scheduler exceptions. Setup: [CALENDAR_EMAIL_SETUP.md](CALENDAR_EMAIL_SETUP.md). The frontend remains unchanged and live provider verification is pending.

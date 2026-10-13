@@ -16,7 +16,8 @@ export function createApp(environment: Environment, services?: AccessServices) {
       if (!origin || environment.FRONTEND_ORIGINS.includes(origin)) callback(null, true);
       else callback(new ApiError(403, 'FORBIDDEN', 'Origin is not allowed'));
     },
-    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
     allowedHeaders: ['Authorization', 'Content-Type'],
   }));
   app.use(express.json({ limit: '32kb' }));

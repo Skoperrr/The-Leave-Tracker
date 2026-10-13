@@ -1,6 +1,6 @@
 # Google Workspace integration — proposed extension
 
-Status: design and contract proposal only. No Google OAuth routes, tokens, sync jobs, Google events or invitations have been implemented or tested. No invitations have been sent. Complete and verify the core employee/manager/internal-calendar flows first, as the integration instruction requires. The shared API contract remains unchanged; agree on this proposal with Kopano before frontend integration.
+Status: the original proposal below is retained as design history. The backend now implements calendar OAuth/state/PKCE, encrypted credentials, scoped settings, transactional jobs, a leased retry worker and notification-recipient filtering. The additive migration is applied. The exact implemented API/behaviour is in EMAIL_CALENDAR_BACKEND_HANDOFF.md and OpenAPI 0.6; setup is in CALENDAR_EMAIL_SETUP.md. Frontend remains unchanged. No live Google owner connection, event creation or invitation receipt is verified; credentials, consent and scheduler setup remain pending. Google sign-in is deferred.
 
 ## How it works
 

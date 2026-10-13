@@ -1,12 +1,606 @@
 openapi: 3.0.3
 info:
   title: The Leave Tracker API
-  version: 0.5.0
-  description: Access, employee leave, manager decisions, internal calendars and admin membership listing. Protected responses use Cache-Control no-store. Admin editing and Google integration are pending.
+  version: 0.6.0
+  description: Email onboarding, scoped employee assignment, leave workflows and Google Calendar OAuth/outbox. Google sign-in is deferred; frontend integration and live Google consent remain to be completed.
 servers:
   - url: http://localhost:3001/api/v1
 paths:
+  "/auth/profile":
+    post:
+      operationId: provisionConfirmedEmailProfile
+      summary: Provision confirmed account profile; no organisation memberships or roles
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/Me"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - fullName
+              properties:
+                fullName:
+                  type: string
+                  minLength: 2
+                  maxLength: 120
+  "/admin/allocations":
+    post:
+      operationId: createEmployeeAllocation
+      summary: Create allocation within the actor admin organisation
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/AdminAllocation"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - organisationId
+              - membershipId
+              - leaveTypeId
+              - year
+              - allocatedDays
+              properties:
+                organisationId:
+                  type: string
+                  format: uuid
+                membershipId:
+                  type: string
+                  format: uuid
+                leaveTypeId:
+                  type: string
+                  format: uuid
+                year:
+                  type: integer
+                  minimum: 2000
+                  maximum: 9999
+                allocatedDays:
+                  type: number
+                  minimum: 0
+                  maximum: 999999.99
+                  multipleOf: 0.01
+  "/integrations/google/status":
+    get:
+      operationId: getGoogleCalendarStatus
+      summary: Selected organisation admin connection and latest job
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/GoogleStatus"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      parameters:
+      - in: query
+        name: organisationId
+        required: true
+        schema:
+          type: string
+          format: uuid
+  "/integrations/google/connect":
+    get:
+      operationId: connectGoogleCalendar
+      summary: Start admin calendar consent; sets HttpOnly browser-binding cookie
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - authorisationUrl
+                    - expiresAt
+                    properties:
+                      authorisationUrl:
+                        type: string
+                        format: uri
+                      expiresAt:
+                        type: string
+                        format: date-time
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      parameters:
+      - in: query
+        name: organisationId
+        required: true
+        schema:
+          type: string
+          format: uuid
+  "/integrations/google/disconnect":
+    delete:
+      operationId: disconnectGoogleCalendar
+      summary: Forget credentials; existing Google events remain; in-flight writes may
+        complete
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/GoogleStatus"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      parameters:
+      - in: query
+        name: organisationId
+        required: true
+        schema:
+          type: string
+          format: uuid
+  "/integrations/google/settings":
+    patch:
+      operationId: updateGoogleCalendarSettings
+      summary: Validate writable calendar; invitations off by default; queue upcoming
+        approved events
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/GoogleStatus"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      parameters:
+      - in: query
+        name: organisationId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              minProperties: 1
+              properties:
+                calendarId:
+                  type: string
+                  minLength: 1
+                  maxLength: 1024
+                invitationsEnabled:
+                  type: boolean
+  "/integrations/google/test":
+    post:
+      operationId: testGoogleCalendar
+      summary: Read-only writable-calendar check; sends no invitations
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - calendarId
+                    - writable
+                    - checkedAt
+                    properties:
+                      calendarId:
+                        type: string
+                      writable:
+                        type: boolean
+                        enum:
+                        - true
+                      checkedAt:
+                        type: string
+                        format: date-time
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      parameters:
+      - in: query
+        name: organisationId
+        required: true
+        schema:
+          type: string
+          format: uuid
+  "/integrations/google/retry":
+    post:
+      operationId: retryGoogleCalendarJob
+      summary: Retry only failed/waiting jobs in the current organisation integration
+        revision
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/GoogleStatus"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - organisationId
+              - jobId
+              properties:
+                organisationId:
+                  type: string
+                  format: uuid
+                jobId:
+                  type: string
+                  format: uuid
+  "/integrations/google/calendars":
+    get:
+      operationId: listGoogleWritableCalendars
+      summary: List writable calendars using only this organisation credentials
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                      - id
+                      - summary
+                      - timeZone
+                      - accessRole
+                      properties:
+                        id:
+                          type: string
+                        summary:
+                          type: string
+                        timeZone:
+                          type: string
+                        accessRole:
+                          type: string
+                          enum:
+                          - writer
+                          - owner
+                  meta:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - nextPageToken
+                    properties:
+                      nextPageToken:
+                        type: string
+                        nullable: true
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      parameters:
+      - in: query
+        name: organisationId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: cursor
+        schema:
+          type: string
+          maxLength: 2048
+  "/integrations/google/callback":
+    get:
+      operationId: completeGoogleCalendarConsent
+      summary: Public provider callback; expiring single-use state, PKCE and browser
+        nonce replace bearer authentication
+      security: []
+      parameters:
+      - in: query
+        name: state
+        required: true
+        schema:
+          type: string
+          minLength: 20
+          maxLength: 128
+      - in: query
+        name: code
+        schema:
+          type: string
+          maxLength: 4096
+      - in: query
+        name: error
+        schema:
+          type: string
+      responses:
+        '303':
+          description: Fixed configured frontend redirect with non-sensitive result;
+            no bearer/token/code in Location
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+  "/internal/google-calendar-sync":
+    get:
+      operationId: runCalendarWorker
+      summary: Scheduler-only; bounded one-job batch; Supabase user tokens are not accepted
+      security:
+      - cronAuth: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                    - claimed
+                    - succeeded
+                    - retried
+                    - failed
+                    - cancelled
+                    properties:
+                      claimed:
+                        type: integer
+                        minimum: 0
+                      succeeded:
+                        type: integer
+                        minimum: 0
+                      retried:
+                        type: integer
+                        minimum: 0
+                      failed:
+                        type: integer
+                        minimum: 0
+                      cancelled:
+                        type: integer
+                        minimum: 0
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
   /admin/memberships:
+    post:
+      operationId: assignEmployeeMembership
+      summary: Assign an existing active signup profile EMPLOYEE access; never accept
+        role flags
+      security:
+      - bearerAuth: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/Membership"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalError"
+        '503':
+          "$ref": "#/components/responses/CalendarUnavailable"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - organisationId
+              - email
+              properties:
+                organisationId:
+                  type: string
+                  format: uuid
+                email:
+                  type: string
+                  format: email
+                managerMembershipId:
+                  type: string
+                  format: uuid
+                  nullable: true
     get:
       operationId: getAdminMemberships
       summary: Read-only memberships in the selected admin organisation, including inactive memberships
@@ -353,11 +947,20 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
+    cronAuth:
+      type: http
+      scheme: bearer
+      description: Server-only CRON_SECRET, separate from Supabase user authentication
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: Supabase access JWT
   responses:
+    CalendarUnavailable:
+      description: Google Calendar has not been configured on the server
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
     NotFound:
       description: Missing active leave type or missing/hidden leave request
       content:
@@ -409,6 +1012,107 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    AdminAllocation:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - organisationId
+      - membershipId
+      - leaveTypeId
+      - year
+      - allocatedDays
+      - createdAt
+      - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        organisationId:
+          type: string
+          format: uuid
+        membershipId:
+          type: string
+          format: uuid
+        leaveTypeId:
+          type: string
+          format: uuid
+        year:
+          type: integer
+        allocatedDays:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    GoogleStatus:
+      type: object
+      additionalProperties: false
+      required:
+      - organisationId
+      - provider
+      - connectionStatus
+      - calendarId
+      - invitationsEnabled
+      - lastSync
+      properties:
+        organisationId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum:
+          - GOOGLE
+        connectionStatus:
+          type: string
+          enum:
+          - DISCONNECTED
+          - CONNECTED
+          - REAUTH_REQUIRED
+        calendarId:
+          type: string
+          nullable: true
+        invitationsEnabled:
+          type: boolean
+        lastSync:
+          nullable: true
+          type: object
+          additionalProperties: false
+          required:
+          - jobId
+          - status
+          - attemptedAt
+          - errorCode
+          - invitationStatus
+          - recipientCount
+          properties:
+            jobId:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum:
+              - PENDING
+              - PROCESSING
+              - SUCCEEDED
+              - RETRY
+              - FAILED
+              - CANCELLED
+            attemptedAt:
+              type: string
+              format: date-time
+              nullable: true
+            errorCode:
+              type: string
+              nullable: true
+            invitationStatus:
+              type: string
+              nullable: true
+            recipientCount:
+              type: integer
+              nullable: true
     ManagerLeaveRequest:
       allOf:
         - { $ref: '#/components/schemas/LeaveRequest' }

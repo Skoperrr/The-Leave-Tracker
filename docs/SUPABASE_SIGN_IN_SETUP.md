@@ -1,4 +1,6 @@
-# Supabase email and Google sign-in
+# Supabase email and Google sign-in (Google sign-in deferred)
+
+Current scope is email signup/sign-in and Google Calendar; Google sign-in is deferred. Email/calendar backend and frontend handoff: [EMAIL_CALENDAR_BACKEND_HANDOFF.md](EMAIL_CALENDAR_BACKEND_HANDOFF.md). Setup: [CALENDAR_EMAIL_SETUP.md](CALENDAR_EMAIL_SETUP.md).
 
 The existing frontend uses React/Vite, Supabase browser authentication, and bearer tokens for the Express API. This is not the Next.js setup shown in the dashboard screenshot. Frontend components remain unchanged at the user's request.
 
@@ -22,7 +24,7 @@ Email/password authentication does not itself enable magic links, signup or pass
 
 Sources: [Password-based Auth](https://supabase.com/docs/guides/auth/passwords), [Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls), [Custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
 
-## Google provider
+## Google provider — deferred reference
 
 1. Open [Google Cloud Console](https://console.cloud.google.com/) and select/create the project for your application.
 2. Open Google Auth Platform. Configure Branding (app name, support/contact email), Audience and Data Access. Use `openid`, `userinfo.email` and `userinfo.profile`. If using an External audience in Testing, add the Google accounts that will test login under test users.

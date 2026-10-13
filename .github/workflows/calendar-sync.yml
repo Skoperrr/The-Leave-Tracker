@@ -1,0 +1,46 @@
+name: Sync organisation calendars
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '2-57/5 * * * *'
+permissions: {}
+concurrency:
+  group: organisation-calendar-worker
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: vars.CALENDAR_SYNC_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Invoke protected worker
+        env:
+          WORKER_URL: https://the-leave-tracker-skfc.vercel.app/api/v1/internal/google-calendar-sync
+          CALENDAR_CRON_SECRET: ${{ secrets.CALENDAR_CRON_SECRET }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        shell: bash
+        run: |
+          if [[ -z "$CALENDAR_CRON_SECRET" ]]; then
+            echo 'Configure the repository CALENDAR_CRON_SECRET secret first.'
+            exit 1
+          fi
+          request_headers=(--header "Authorization: Bearer $CALENDAR_CRON_SECRET")
+          if [[ -n "$VERCEL_AUTOMATION_BYPASS_SECRET" ]]; then
+            request_headers+=(--header "x-vercel-protection-bypass: $VERCEL_AUTOMATION_BYPASS_SECRET")
+          fi
+          response_path="$RUNNER_TEMP/calendar-sync-response.json"
+          status=$(curl --silent --show-error --max-time 240 \
+            "${request_headers[@]}" --output "$response_path" \
+            --write-out '%{http_code}' "$WORKER_URL")
+          if [[ "$status" != '200' ]]; then
+            echo "Worker returned HTTP $status; check deployment and scheduler secrets."
+            exit 1
+          fi
+          python3 - "$response_path" <<'PY'
+          import json, sys
+          payload = json.load(open(sys.argv[1]))['data']
+          fields = ['claimed', 'succeeded', 'retried', 'failed', 'cancelled']
+          if any(not isinstance(payload.get(key), int) for key in fields):
+              raise SystemExit('Unexpected worker response')
+          print(json.dumps({key: payload[key] for key in fields}))
+          PY

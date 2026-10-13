@@ -56,3 +56,8 @@ Actual Chrome verification passed 24 checks across all six demo accounts; see TE
 
 
 The latest main was pulled before this admin integration. Its Vercel Services routing, renamed application.ts factory, explicit ESM entry point, branding changes and dedicated ADMIN Leave approvals UI are preserved. The new membership-list service is injected into both standalone and Vercel entry points. Our changes do not modify the incoming frontend. Historical screenshots show the UI before the incoming branding/approval changes; their timestamped verification remains historical evidence. Production browser verification still requires the actual deployed URL.
+
+
+## Email signup and calendar handoff
+
+Victor selected open signup with no initial memberships, backend-only implementation, and invitations to confirmed active organisation members. Frontend remains unchanged. OpenAPI 0.6 and EMAIL_CALENDAR_BACKEND_HANDOFF.md document the new routes; coordinate this addendum before implementing the frontend. Signup uses Supabase SDK, then calls POST /auth/profile after email confirmation and before the authenticated workspace. Admins assign EMPLOYEE membership and allocations through new POST endpoints. Google connection uses browser-bound state/cookie and PKCE; callback is a documented bearer exception. Calendar jobs are created atomically with approvals and processed separately. Vercel Hobby uses the prepared GitHub Actions schedule, disabled until repository configuration is completed. Google sign-in is deferred; Calendar consent remains necessary. Google credentials/consent, real SMTP/signup delivery and real invitation receipts remain unverified.

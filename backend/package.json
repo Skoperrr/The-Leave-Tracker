@@ -7,6 +7,9 @@
     "node": ">=22.12.0 <23 || >=24.0.0 <25"
   },
   "scripts": {
+    "calendar:sync": "tsx --env-file=.env src/scripts/run-calendar-worker.ts",
+    "calendar:configure": "node scripts/configure-calendar.mjs",
+    "auth:check:onboarding": "tsx --env-file=.env src/scripts/check-onboarding.ts",
     "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json",
@@ -19,7 +22,8 @@
     "db:check": "tsx --env-file=.env src/scripts/check-database.ts",
     "db:migrate": "tsx --env-file-if-exists=.env src/scripts/migrate.ts",
     "db:seed": "prisma db seed",
-    "test:database": "node --env-file=.env node_modules/vitest/vitest.mjs run tests/database.integration.test.ts tests/leave.integration.test.ts",
+    "test:database": "node --env-file=.env node_modules/vitest/vitest.mjs run tests/database.integration.test.ts tests/leave.integration.test.ts tests/calendar.integration.test.ts",
+    "test:calendar:database": "node --env-file=.env node_modules/vitest/vitest.mjs run tests/calendar.integration.test.ts",
     "db:seed:accounts": "tsx --env-file=.env prisma/seed-accounts.ts",
     "auth:check:demo": "tsx --env-file=.env src/scripts/check-demo-auth.ts",
     "demo:promote:admins": "tsx --env-file=.env src/scripts/promote-demo-admins.ts",
@@ -34,6 +38,8 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.7",
     "express": "^5.3.0",
+    "google-auth-library": "^11.3.0",
+    "googleapis": "^185.0.0",
     "helmet": "^8.3.0",
     "pg": "^8.23.1",
     "zod": "^4.6.7"

@@ -1,8 +1,10 @@
+import { createCalendarRuntime } from './services/calendar-runtime.js';
+import { createOnboardingService } from './services/onboarding.js';
 import { createApp } from './application.js';
 import { readEnvironment } from './config/env.js';
 import { readDatabaseEnvironment } from './config/database-env.js';
 import { createDatabase } from './lib/database.js';
-import { createTokenVerifier } from './lib/supabase.js';
+import { createTokenVerifier, createConfirmedIdentityVerifier } from './lib/supabase.js';
 import { createAccessRepository } from './repositories/access.js';
 import { databaseFailureCategory } from './utils/database-error.js';
 import { createLeaveRepository } from './repositories/leave.js';
@@ -19,9 +21,10 @@ async function start() {
     await database.$disconnect();
     throw new Error(`Database startup failed: ${databaseFailureCategory(error)}`);
   }
-  const services = { verifyToken: createTokenVerifier(configuration), repository: createAccessRepository(database),
+  const services = { ...createCalendarRuntime(database, configuration), verifyToken: createTokenVerifier(configuration), repository: createAccessRepository(database),
     leave: createLeaveService(createLeaveRepository(database)), manager: createManagerService(createLeaveRepository(database)),
-    admin: createAdminService(createLeaveRepository(database)) };
+    admin: createAdminService(createLeaveRepository(database)),
+    onboarding: createOnboardingService(database, createConfirmedIdentityVerifier(configuration)) };
   const server = createApp(environment, services).listen(environment.PORT, () => {
     console.info(`Leave Tracker API listening on port ${environment.PORT}`);
   });

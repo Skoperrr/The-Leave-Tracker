@@ -4,8 +4,11 @@ import { ApiError } from '../utils/api-error.js';
 import type { LeaveService } from './leave.js';
 import type { ManagerService } from './manager.js';
 import type { AdminService } from './admin.js';
+import type { OnboardingService } from './onboarding.js';
+import type { CalendarIntegrationService } from './calendar-integration.js';
+import type { CalendarWorker } from './calendar-worker.js';
 
-export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService };
+export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService; onboarding?: OnboardingService; google?: CalendarIntegrationService; calendarWorker?: CalendarWorker };
 
 export async function authenticateAccount(services: AccessServices, token: string): Promise<Account> {
   const identityId = await services.verifyToken(token);

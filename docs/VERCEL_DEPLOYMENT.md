@@ -74,3 +74,8 @@ Services builder from promoting the compiled `dist/index.mjs` to the function
 root while retaining dependencies under `backend/node_modules`. Instead Vercel
 packages the source entrypoint with dependency paths relative to the service.
 Keep the frontend output directory as `dist`.
+
+
+## Email onboarding and calendar worker
+
+New email/calendar backend configuration is documented in CALENDAR_EMAIL_SETUP.md. Google client, encryption, Auth Admin recipient verification and scheduler secrets must stay server-only. Backend calendar routes are optional when GOOGLE_CLIENT_ID is unset; complete all required Google settings before setting that ID. Calendar approvals enqueue jobs inside PostgreSQL and never call Google in the approval request. On Hobby, use the prepared disabled-by-default GitHub Actions workflow for five-minute scheduling, with both application scheduler authentication and Vercel automation bypass. Worker calls are bounded and may need a sufficiently long function duration. No Vercel cron schedule was added that would fail Hobby deployment limits.

@@ -1,9 +1,11 @@
+import { createCalendarRuntime } from './services/calendar-runtime.js';
+import { createOnboardingService } from './services/onboarding.js';
 import express from 'express';
 import { createApp } from './application.js';
 import { readEnvironment } from './config/env.js';
 import { readDatabaseEnvironment } from './config/database-env.js';
 import { createDatabase } from './lib/database.js';
-import { createTokenVerifier } from './lib/supabase.js';
+import { createTokenVerifier, createConfirmedIdentityVerifier } from './lib/supabase.js';
 import { createAccessRepository } from './repositories/access.js';
 import { createLeaveRepository } from './repositories/leave.js';
 import { createLeaveService } from './services/leave.js';
@@ -18,10 +20,11 @@ const database = createDatabase(configuration.DATABASE_URL);
 const repository = createLeaveRepository(database);
 const app = express();
 app.use(createApp(environment, {
-  verifyToken: createTokenVerifier(configuration),
+  ...createCalendarRuntime(database, configuration), verifyToken: createTokenVerifier(configuration),
   repository: createAccessRepository(database),
   leave: createLeaveService(repository),
   manager: createManagerService(repository),
   admin: createAdminService(repository),
+  onboarding: createOnboardingService(database, createConfirmedIdentityVerifier(configuration)),
 }));
 export default app;

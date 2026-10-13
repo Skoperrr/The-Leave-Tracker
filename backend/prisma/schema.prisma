@@ -30,6 +30,8 @@ model User {
   memberships Membership[]
   leaveGroups LeaveGroup[]
   auditLogs   AuditLog[]
+  calendarConnections OrganisationCalendarIntegration[]
+  calendarOAuthStates GoogleOAuthState[]
 }
 
 model Organisation {
@@ -43,6 +45,10 @@ model Organisation {
   leaveTypes     LeaveType[]
   calendarEvents CalendarEvent[]
   auditLogs      AuditLog[]
+  calendarIntegration OrganisationCalendarIntegration?
+  calendarSyncJobs CalendarSyncJob[]
+  externalCalendarEvents ExternalCalendarEvent[]
+  calendarOAuthStates GoogleOAuthState[]
 }
 
 model Membership {
@@ -156,6 +162,11 @@ model CalendarEvent {
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
   request        LeaveRequest @relation(fields: [requestId, organisationId], references: [id, organisationId], onDelete: Restrict)
 
+  revision Int @default(1)
+  syncJobs CalendarSyncJob[]
+  externalEvents ExternalCalendarEvent[]
+
+  @@unique([id, organisationId])
   @@unique([requestId, organisationId])
   @@index([organisationId, startDate, endDate])
 }
@@ -174,4 +185,90 @@ model AuditLog {
 
   @@index([organisationId, createdAt])
   @@index([entityType, entityId])
+}
+
+
+model OrganisationCalendarIntegration {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @unique @db.Uuid
+  status String @default("DISCONNECTED")
+  calendarId String? @unique
+  connectedByUserId String? @db.Uuid
+  googleSubject String?
+  encryptedRefreshToken String?
+  invitationsEnabled Boolean @default(false)
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  connectedBy User? @relation(fields: [connectedByUserId], references: [id], onDelete: Restrict)
+  jobs CalendarSyncJob[]
+  externalEvents ExternalCalendarEvent[]
+  oauthStates GoogleOAuthState[]
+  @@unique([id, organisationId])
+}
+
+model GoogleOAuthState {
+  id String @id @default(uuid()) @db.Uuid
+  stateHash String @unique
+  browserNonceHash String
+  encryptedVerifier String
+  organisationId String @db.Uuid
+  integrationId String @db.Uuid
+  integrationRevision Int
+  actorUserId String @db.Uuid
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  integration OrganisationCalendarIntegration @relation(fields: [integrationId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  @@index([expiresAt])
+}
+
+model CalendarSyncJob {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  integrationId String @db.Uuid
+  calendarEventId String @db.Uuid
+  integrationRevision Int
+  eventRevision Int
+  operation String @default("UPSERT")
+  state String @default("PENDING")
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  leaseExpiresAt DateTime?
+  leaseOwner String?
+  lastErrorCode String?
+  attemptedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  integration OrganisationCalendarIntegration @relation(fields: [integrationId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  calendarEvent CalendarEvent @relation(fields: [calendarEventId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  @@unique([integrationId, calendarEventId, integrationRevision, eventRevision, operation])
+  @@index([state, nextAttemptAt])
+  @@index([organisationId, createdAt])
+}
+
+model ExternalCalendarEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organisationId String @db.Uuid
+  integrationId String @db.Uuid
+  calendarEventId String @db.Uuid
+  integrationRevision Int
+  googleCalendarId String
+  googleEventId String
+  etag String?
+  payloadHash String
+  syncStatus String
+  invitationStatus String
+  recipientCount Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  organisation Organisation @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  integration OrganisationCalendarIntegration @relation(fields: [integrationId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  calendarEvent CalendarEvent @relation(fields: [calendarEventId, organisationId], references: [id, organisationId], onDelete: Restrict)
+  @@unique([integrationId, calendarEventId, integrationRevision])
+  @@unique([googleCalendarId, googleEventId])
 }
