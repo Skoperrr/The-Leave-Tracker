@@ -1,0 +1,8 @@
+{
+  "name": "the-leave-tracker",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  }
+}

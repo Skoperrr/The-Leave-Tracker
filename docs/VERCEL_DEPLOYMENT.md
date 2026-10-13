@@ -56,11 +56,15 @@ and request `/api/v1/health`. The health endpoint should return the API envelope
 protected endpoints should reject unauthenticated requests. Sign in and verify
 organisation-scoped leave submission and manager decisions against a test DB.
 
-The Vercel entrypoint `backend/src/index.ts` exports an Express app without
+The Vercel entrypoint `backend/src/index.mts` exports an Express app without
 starting a port listener or installing process shutdown handlers. The standalone
 `backend/src/server.ts` keeps its existing startup database check and lifecycle.
 The pool is reused within each function instance; health reports API liveness,
 not database readiness.
 
 The app factory lives in `backend/src/application.ts` so Express detection cannot
-select it instead of the configured `src/index.ts` function entrypoint.
+select it instead of the configured `src/index.mts` function entrypoint.
+
+The root package declares ES module semantics for deployment packaging. The
+backend entrypoint uses `.mts`, compiling to `dist/index.mjs` so its module format
+is explicit. Builds remove stale output before compiling.
