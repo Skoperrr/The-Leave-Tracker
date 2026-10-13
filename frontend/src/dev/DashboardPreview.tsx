@@ -125,13 +125,13 @@ export default function DashboardPreview() {
         <Link
           to="/preview/dashboard"
           className="brand"
-          aria-label="Kopano dashboard preview"
+          aria-label="The Leave Tracker dashboard preview"
         >
           <span className="brand-symbol" aria-hidden="true">
-            k
+            LT
           </span>
           <span>
-            kopano<small>LEAVE, TOGETHER</small>
+            The Leave Tracker<small>LEAVE, TOGETHER</small>
           </span>
         </Link>
         <div className="org-control">
@@ -232,7 +232,7 @@ export default function DashboardPreview() {
           </section>
         </main>
         <footer className="app-footer">
-          Kopano · D-Lab Blitz Day 6{" "}
+          The Leave Tracker · D-Lab Blitz Day 6{" "}
           <span>Development preview · Sample data</span>
         </footer>
       </div>

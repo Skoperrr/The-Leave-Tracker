@@ -34,10 +34,10 @@ export function SignIn() {
       <section className="signin-story">
         <div className="brand">
           <span className="brand-symbol" aria-hidden="true">
-            k
+            LT
           </span>
           <span>
-            kopano<small>LEAVE, TOGETHER</small>
+            The Leave Tracker<small>LEAVE, TOGETHER</small>
           </span>
         </div>
         <div>
@@ -59,7 +59,7 @@ export function SignIn() {
       </section>
       <section className="signin-form">
         <div>
-          <p className="eyebrow">WELCOME TO KOPANO</p>
+          <p className="eyebrow">WELCOME TO THE LEAVE TRACKER</p>
           <h2>Sign in to your workspace</h2>
           <p className="muted">Use your organisation's registered account.</p>
           {!supabase && (

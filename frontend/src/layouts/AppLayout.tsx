@@ -15,12 +15,12 @@ export function AppLayout() {
         Skip to content
       </a>
       <aside className="sidebar">
-        <NavLink to="/" className="brand" aria-label="Kopano home">
+        <NavLink to="/" className="brand" aria-label="The Leave Tracker home">
           <span className="brand-symbol" aria-hidden="true">
-            k
+            LT
           </span>
           <span>
-            kopano<small>LEAVE, TOGETHER</small>
+            The Leave Tracker<small>LEAVE, TOGETHER</small>
           </span>
         </NavLink>
         <div className="org-control">
@@ -75,7 +75,7 @@ export function AppLayout() {
           <Outlet />
         </main>
         <footer className="app-footer">
-          Kopano · D-Lab Blitz Day 6 <span>Time away. Peace of mind.</span>
+          The Leave Tracker · D-Lab Blitz Day 6 <span>Time away. Peace of mind.</span>
         </footer>
       </div>
     </div>
