@@ -122,7 +122,7 @@ beforeEach(() => {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-      const url = new URL(String(input));
+      const url = new URL(String(input), window.location.origin);
       const path = url.pathname.replace("/api/v1", "");
       const method = init?.method ?? "GET";
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;

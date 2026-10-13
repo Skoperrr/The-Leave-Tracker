@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { decisionBody, managerQuery, calendarQuery } from '../src/validators/manager.js';
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/application.js';
 import { readEnvironment } from '../src/config/env.js';
 import type { ManagerService } from '../src/services/manager.js';
 

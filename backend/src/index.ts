@@ -1,0 +1,25 @@
+import express from 'express';
+import { createApp } from './application.js';
+import { readEnvironment } from './config/env.js';
+import { readDatabaseEnvironment } from './config/database-env.js';
+import { createDatabase } from './lib/database.js';
+import { createTokenVerifier } from './lib/supabase.js';
+import { createAccessRepository } from './repositories/access.js';
+import { createLeaveRepository } from './repositories/leave.js';
+import { createLeaveService } from './services/leave.js';
+import { createManagerService } from './services/manager.js';
+
+// Vercel owns the listener and function lifecycle. Reuse the pool per instance;
+// keep server.ts for standalone development and its database startup check.
+const environment = readEnvironment();
+const configuration = readDatabaseEnvironment();
+const database = createDatabase(configuration.DATABASE_URL);
+const repository = createLeaveRepository(database);
+const app = express();
+app.use(createApp(environment, {
+  verifyToken: createTokenVerifier(configuration),
+  repository: createAccessRepository(database),
+  leave: createLeaveService(repository),
+  manager: createManagerService(repository),
+}));
+export default app;

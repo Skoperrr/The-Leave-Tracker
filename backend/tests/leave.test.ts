@@ -2,7 +2,7 @@ import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import { parseDateOnly, calculateWorkingDays } from '../src/utils/dates.js';
 import { createLeaveBody, historyQuery } from '../src/validators/leave.js';
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/application.js';
 import { readEnvironment } from '../src/config/env.js';
 import type { LeaveService } from '../src/services/leave.js';
 

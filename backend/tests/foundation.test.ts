@@ -2,7 +2,7 @@ import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import { z } from 'zod';
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/application.js';
 import { readEnvironment } from '../src/config/env.js';
 import { errorHandler } from '../src/middleware/errors.js';
 import { validate } from '../src/middleware/validate.js';
@@ -105,5 +105,25 @@ describe('reusable validation and error handling', () => {
       expect(response.body).toEqual({ error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred', details: {} } });
       expect(log).toHaveBeenCalledWith('Unhandled API error');
     } finally { log.mockRestore(); }
+  });
+});
+
+
+describe('Vercel generated origins', () => {
+  it('allows generated production origins', () => {
+    expect(readEnvironment({ NODE_ENV: 'production', VERCEL_ENV: 'production',
+      VERCEL_URL: 'leave-abc.vercel.app', VERCEL_PROJECT_PRODUCTION_URL: 'leave.vercel.app',
+    }).FRONTEND_ORIGINS).toEqual(['https://leave-abc.vercel.app', 'https://leave.vercel.app']);
+  });
+  it('scopes previews to their deployment and branch', () => {
+    expect(readEnvironment({ NODE_ENV: 'production', VERCEL_ENV: 'preview',
+      VERCEL_URL: 'leave-preview.vercel.app', VERCEL_BRANCH_URL: 'leave-git-feature.vercel.app',
+      VERCEL_PROJECT_PRODUCTION_URL: 'leave.vercel.app',
+    }).FRONTEND_ORIGINS).toEqual(['https://leave-preview.vercel.app', 'https://leave-git-feature.vercel.app']);
+  });
+  it('preserves an explicit override', () => {
+    expect(readEnvironment({ FRONTEND_ORIGINS: 'https://leave.example',
+      VERCEL_URL: 'leave.vercel.app',
+    }).FRONTEND_ORIGINS).toEqual(['https://leave.example']);
   });
 });

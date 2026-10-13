@@ -7,7 +7,7 @@ import { createLeaveRepository } from '../src/repositories/leave.js';
 import { createLeaveService } from '../src/services/leave.js';
 import { createManagerService } from '../src/services/manager.js';
 import type { LeaveRepository, LeaveTransaction } from '../src/repositories/leave.js';
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/application.js';
 import { readEnvironment } from '../src/config/env.js';
 import type { Express } from 'express';
 

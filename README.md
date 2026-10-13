@@ -38,3 +38,8 @@ Use Node 22.12+ in the 22 LTS line or Node 24 LTS. Express handles HTTP; strict 
 Read [implementation plan](docs/IMPLEMENTATION_PLAN.md), [setup](docs/BACKEND_SETUP.md), [API implementation](docs/API_IMPLEMENTATION.md), [database design](docs/DATABASE_DESIGN.md), [test evidence](docs/TESTING.md), and [collaboration/integration](docs/COLLABORATION.md). The [shared API contract](docs/SHARED_API_CONTRACT.md) defines endpoint names and JSON shapes. [OpenAPI](backend/openapi.yaml) describes currently implemented endpoints.
 
 The [Google Workspace proposal](docs/GOOGLE_WORKSPACE_INTEGRATION.md) covers separate org calendars, encrypted OAuth tokens, async jobs and optional org-only invitations, including manual Google Cloud setup. Google functionality is pending and the shared contract is unchanged.
+
+## Vercel deployment
+
+See [Vercel services setup](docs/VERCEL_DEPLOYMENT.md) for the shared-domain
+frontend/backend configuration, environment variables and local verification.

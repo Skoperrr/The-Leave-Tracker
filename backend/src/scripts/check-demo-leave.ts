@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
-import { createApp } from '../app.js';
+import { createApp } from '../application.js';
 import { readEnvironment } from '../config/env.js';
 import { readDatabaseEnvironment } from '../config/database-env.js';
 import { createDatabase } from '../lib/database.js';

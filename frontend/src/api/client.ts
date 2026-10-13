@@ -101,7 +101,7 @@ export function createApiClient({
   };
 }
 export const apiClient = createApiClient({
-  baseUrl: import.meta.env.VITE_API_URL || "http://localhost:3001",
+  baseUrl: import.meta.env.VITE_API_URL || "",
   getToken: async () => {
     if (!supabase) return null;
     const { data, error } = await supabase.auth.getSession();

@@ -22,7 +22,16 @@ const environmentSchema = z.object({
 });
 
 export function readEnvironment(input: NodeJS.ProcessEnv = process.env) {
-  const result = environmentSchema.safeParse(input);
+  const generatedOrigins = [input.VERCEL_URL, input.VERCEL_BRANCH_URL,
+    ...(input.VERCEL_ENV === 'production' ? [input.VERCEL_PROJECT_PRODUCTION_URL] : [])]
+    .filter((host): host is string => Boolean(host))
+    .map((host) => `https://${host}`);
+  const result = environmentSchema.safeParse({
+    ...input,
+    ...(input.FRONTEND_ORIGINS === undefined && generatedOrigins.length > 0
+      ? { FRONTEND_ORIGINS: [...new Set(generatedOrigins)].join(',') }
+      : {}),
+  });
   if (!result.success) {
     const fields = [...new Set(result.error.issues.map((issue) => issue.path.join('.')))];
     throw new Error(`Invalid environment configuration: ${fields.join(', ')}`);
