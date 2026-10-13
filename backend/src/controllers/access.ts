@@ -26,3 +26,11 @@ export function getLeaveTypes(services?: AccessServices): RequestHandler {
     response.json({ data: await services.repository.listLeaveTypes(orgId) });
   };
 }
+
+export function getAdminMemberships(services?: AccessServices): RequestHandler {
+  return async (_request, response) => {
+    const { organisationId } = response.locals.validated as { organisationId: string };
+    if (!services?.admin) throw new ApiError(500, 'INTERNAL_ERROR', 'Administration access is not configured');
+    response.json({ data: await services.admin.memberships(authenticatedAccount(response).id, organisationId) });
+  };
+}

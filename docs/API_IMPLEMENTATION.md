@@ -1,6 +1,6 @@
 # API implementation status
 
-The shared contract is unchanged. API prefix: `/api/v1`. Backend default: `http://localhost:3001`. Health, three access endpoints, four employee leave endpoints, manager queue/decision and internal calendar are implemented. Protected paths require verification; pending admin/Google paths return 401 without auth and 404 after successful auth. Google endpoints are proposed separately and are not operational.
+The shared contract is unchanged. API prefix: `/api/v1`. Backend default: `http://localhost:3001`. Health, three access endpoints, four employee leave endpoints, manager queue/decision, internal calendar and admin membership listing are implemented. Pending admin editing/Google paths return 401 without auth and 404 after successful auth. Google endpoints are proposed separately and are not operational.
 
 ## Implemented endpoint
 
@@ -41,13 +41,16 @@ const memberships = payload.data.memberships;
 
 Verification: provider-mocked API/adapter tests pass. Fictional Auth-backed demo profiles/memberships now exist; auth:check:demo runs real sign-in and endpoint isolation checks. See TESTING.md for actual run evidence and DEMO_ACCOUNTS.md for local login credentials. OpenAPI describes these implemented routes.
 
+## Implemented admin membership listing
+
+GET `/api/v1/admin/memberships?organisationId=<UUID>` rechecks active profile, organisation and ADMIN membership within a read transaction, then lists that organisation's memberships (including inactive records). Returns `{data: Membership[]}` with exactly id, organisationId, organisationName, role, managerMembershipId and active, matching the existing shared type. EMPLOYEE/MANAGER are forbidden; ADMIN authority never carries into another organisation. Invalid or extra query fields return 400. Membership/allocation editing remains pending.
+
 ## Pending endpoints (not operational)
 
 All require verified bearer authentication once implemented. The linked contract defines request/response examples; these rows track scope rather than claiming executable APIs.
 
 | Method | Full path | Role / inputs | Planned response |
 |---|---|---|---|
-| GET | `/api/v1/admin/memberships` | Org admin; organisationId required | Membership list; clarify exact shape |
 | PATCH | `/api/v1/admin/memberships/:id` | Org admin; role/manager/active | Updated membership |
 | PATCH | `/api/v1/admin/allocations/:id` | Org admin; allocatedDays | Updated allocation; clarify exact shape |
 

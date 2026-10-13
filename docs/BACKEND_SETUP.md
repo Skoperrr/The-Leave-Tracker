@@ -11,7 +11,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Default API: `http://localhost:3001/api/v1`; permitted frontend origin: `http://localhost:5173`. `PORT` must be an integer from 1 to 65535. `NODE_ENV` must be development, test or production. `FRONTEND_ORIGINS` accepts comma-separated exact HTTP(S) origins without paths or trailing slashes. Production origins require HTTPS. Invalid settings stop startup, listing field names without echoing values.
+Default API: `http://localhost:3001/api/v1`; permitted local frontend origins: `http://localhost:5173` and `http://127.0.0.1:5173`. `PORT` must be an integer from 1 to 65535. `NODE_ENV` must be development, test or production. `FRONTEND_ORIGINS` accepts comma-separated exact HTTP(S) origins without paths or trailing slashes. Production origins require HTTPS. Invalid settings stop startup, listing field names without echoing values.
 
 Node loads local .env before startup. Protected routes require the database/Auth settings below; the server performs SELECT 1 before listening. Invalid settings or an unreachable database prevent startup. Ordinary unit/API tests inject configuration and mock the provider/repository; explicit live database tests need credentials. `npm run dev` restarts on changes; `npm run build` generates Prisma Client and writes dist; `npm start` runs compiled JavaScript. SIGINT/SIGTERM close requests and disconnect Prisma, with a ten-second deadline.
 

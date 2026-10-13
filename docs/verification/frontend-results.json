@@ -1,0 +1,371 @@
+{
+  "verifiedAt": "2026-10-13T12:45:31.627Z",
+  "frontendUnchanged": true,
+  "checks": [
+    "Real browser email login: ayanda.demo@example.com",
+    "Employee has exactly two organisations and no manager/admin navigation",
+    "Employee dashboard fits mobile width",
+    "Employee switches organisation without losing session",
+    "Linked submission creates two independent pending five-day requests",
+    "Real browser email login: thabo.demo@example.com",
+    "D-Lab manager has ADMIN navigation and only one organisation",
+    "Administration lists scoped real memberships",
+    "Admin decline through browser releases its organisation reservation",
+    "Calendar shows existing approved leave and excludes private reasons",
+    "Real browser email login: ayanda.demo@example.com",
+    "One linked child is declined while the other remains pending",
+    "Employee cancels only the remaining linked child",
+    "Real browser email login: lerato.demo@example.com",
+    "Scoped ADMIN browser role: lerato.demo@example.com",
+    "Real browser email login: sibusiso.demo@example.com",
+    "Scoped ADMIN browser role: sibusiso.demo@example.com",
+    "Real browser email login: naledi.admin.demo@example.com",
+    "Scoped ADMIN browser role: naledi.admin.demo@example.com",
+    "Real browser email login: neo.demo@example.com",
+    "Single-organisation employee has no privileged navigation",
+    "Employee direct admin and manager routes show permission required",
+    "No unhandled browser runtime exceptions",
+    "Frontend API requests completed without server errors"
+  ],
+  "findings": [
+    "Manager inbox “All statuses” omits decided requests: frontend omits status, backend defaults to PENDING. Explicit status filters work."
+  ],
+  "responses": [
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/balances",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/organisations/3bb97281-ad46-4bf8-a4f7-d9904ac10538/leave-types",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/organisations/3bb97281-ad46-4bf8-a4f7-d9904ac10538/leave-types",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/balances",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/balances",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/organisations/f675859b-d3a2-4952-ac6b-42218945153f/leave-types",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/organisations/f675859b-d3a2-4952-ac6b-42218945153f/leave-types",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/balances",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisations/f675859b-d3a2-4952-ac6b-42218945153f/leave-types",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisations/3bb97281-ad46-4bf8-a4f7-d9904ac10538/leave-types",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/organisations/3bb97281-ad46-4bf8-a4f7-d9904ac10538/leave-types",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 201
+    },
+    {
+      "path": "/api/v1/organisations/f675859b-d3a2-4952-ac6b-42218945153f/leave-types",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/organisations/3bb97281-ad46-4bf8-a4f7-d9904ac10538/leave-types",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/organisations/f675859b-d3a2-4952-ac6b-42218945153f/leave-types",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/organisations/3bb97281-ad46-4bf8-a4f7-d9904ac10538/leave-types",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/manager/leave-requests/6aa47a17-92fa-4e33-bd33-babfeec26cb7/decision",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/manager/leave-requests/6aa47a17-92fa-4e33-bd33-babfeec26cb7/decision",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/manager/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/calendar-events",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/calendar-events",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/calendar-events",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/calendar-events",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/leave-requests/bb98e457-8ca7-42f5-bb8c-907a6dabaa5a/cancel",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests/bb98e457-8ca7-42f5-bb8c-907a6dabaa5a/cancel",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/leave-requests",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/admin/memberships",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 204
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/me",
+      "status": 200
+    }
+  ],
+  "demoMutation": {
+    "dates": [
+      "2026-11-30",
+      "2026-12-04"
+    ],
+    "outcomes": [
+      "DECLINED",
+      "CANCELLED"
+    ],
+    "privateMarker": "Browser QA 1791895438278"
+  },
+  "limitations": [
+    "Google OAuth consent/login requires manual provider setup and an authorised real Google account.",
+    "Google sign-in button not added at user request.",
+    "Live approval was not repeated; browser verified existing approved calendar events."
+  ]
+}

@@ -8,6 +8,7 @@ import { databaseFailureCategory } from './utils/database-error.js';
 import { createLeaveRepository } from './repositories/leave.js';
 import { createLeaveService } from './services/leave.js';
 import { createManagerService } from './services/manager.js';
+import { createAdminService } from './services/admin.js';
 
 async function start() {
   const environment = readEnvironment();
@@ -19,7 +20,8 @@ async function start() {
     throw new Error(`Database startup failed: ${databaseFailureCategory(error)}`);
   }
   const services = { verifyToken: createTokenVerifier(configuration), repository: createAccessRepository(database),
-    leave: createLeaveService(createLeaveRepository(database)), manager: createManagerService(createLeaveRepository(database)) };
+    leave: createLeaveService(createLeaveRepository(database)), manager: createManagerService(createLeaveRepository(database)),
+    admin: createAdminService(createLeaveRepository(database)) };
   const server = createApp(environment, services).listen(environment.PORT, () => {
     console.info(`Leave Tracker API listening on port ${environment.PORT}`);
   });

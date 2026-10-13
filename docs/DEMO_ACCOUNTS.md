@@ -4,14 +4,16 @@ The demo account seed uses Supabase's server-only Auth Admin API. It creates ema
 
 | Email | Name | Organisation roles and manager |
 |---|---|---|
-| thabo.demo@example.com | Thabo Demo | D-Lab MANAGER |
-| lerato.demo@example.com | Lerato Demo | The Field Institute MANAGER |
-| sibusiso.demo@example.com | Sibusiso Demo | StrideShift Global MANAGER |
+| thabo.demo@example.com | Thabo Demo | D-Lab ADMIN |
+| lerato.demo@example.com | Lerato Demo | The Field Institute ADMIN |
+| sibusiso.demo@example.com | Sibusiso Demo | StrideShift Global ADMIN |
 | naledi.admin.demo@example.com | Naledi Demo Admin | ADMIN membership in each of the three organisations |
 | ayanda.demo@example.com | Ayanda Demo | D-Lab EMPLOYEE reporting to Thabo; Field Institute EMPLOYEE reporting to Lerato |
 | neo.demo@example.com | Neo Demo | StrideShift Global EMPLOYEE reporting to Sibusiso |
 
 These are reserved example.com addresses, not actual employees. An admin's access to three organisations comes from three separate memberships, not a global role.
+
+The three organisation managers were explicitly promoted to ADMIN at the user's request; employee reporting assignments remain intact. The separate promotion command authenticates Naledi, checks organisation-specific admin authority and records role-change audits. It skips already-ADMIN targets; ordinary seed reruns preserve existing roles.
 
 ## Local commands
 
@@ -19,6 +21,7 @@ Inside backend, after migrations and the baseline seed:
 
 ```sh
 npm run db:seed:accounts
+npm run demo:promote:admins
 npm run auth:check:demo
 ```
 

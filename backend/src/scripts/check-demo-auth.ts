@@ -8,6 +8,8 @@ import { createDatabase } from '../lib/database.js';
 import { createTokenVerifier } from '../lib/supabase.js';
 import { createAccessRepository } from '../repositories/access.js';
 import { demoUsers } from '../config/demo-users.js';
+import { createAdminService } from '../services/admin.js';
+import { createLeaveRepository } from '../repositories/leave.js';
 
 async function main() {
   const configuration = readDatabaseEnvironment();
@@ -15,7 +17,8 @@ async function main() {
     .parse(JSON.parse(fs.readFileSync('.demo-credentials.json', 'utf8')));
   if (credentials.projectUrl !== configuration.SUPABASE_URL) throw new Error('Demo credential project mismatch');
   const database = createDatabase();
-  const server = createApp(readEnvironment(), { verifyToken: createTokenVerifier(configuration), repository: createAccessRepository(database) }).listen(0, '127.0.0.1');
+  const server = createApp(readEnvironment(), { verifyToken: createTokenVerifier(configuration), repository: createAccessRepository(database),
+    admin: createAdminService(createLeaveRepository(database)) }).listen(0, '127.0.0.1');
   try {
     await new Promise<void>((resolve, reject) => { server.once('listening', resolve); server.once('error', reject); });
     const address = server.address();
@@ -54,6 +57,13 @@ async function main() {
           const response = await fetch(`${base}/organisations/${organisation.id}/leave-types`, { headers });
           const permitted = memberships.some((entry) => entry.organisationId === organisation.id);
           if (response.status !== (permitted ? 200 : 403)) throw new Error('Organisation isolation smoke failed');
+          const adminResponse = await fetch(`${base}/admin/memberships?organisationId=${organisation.id}`, { headers });
+          const isAdmin = memberships.some(entry => entry.organisationId === organisation.id && entry.role === 'ADMIN');
+          if (adminResponse.status !== (isAdmin ? 200 : 403)) throw new Error('Admin isolation smoke failed');
+          if (isAdmin) {
+            const result = await adminResponse.json() as { data: { organisationId: string }[] };
+            if (!result.data.length || result.data.some(entry => entry.organisationId !== organisation.id)) throw new Error('Admin membership scope mismatch');
+          }
         }
         if (credential.email === 'ayanda.demo@example.com' && memberships.length !== 2) throw new Error('Multi-org demo profile missing');
         console.info(`${credential.email}: real sign-in, profile, ${memberships.length} organisation membership(s), and organisation isolation verified`);

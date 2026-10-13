@@ -33,8 +33,10 @@ Roles belong to organisation memberships. Supabase verifies identity; PostgreSQL
 | 5 | Transactions for balances, submission/history/cancel; date/overlap/reservation/concurrency tests | Implemented; evidence in TESTING.md |
 | 6 | Assigned-team manager queue and decisions; self-approval protection; audit transaction and concurrent-decision tests | Implemented and verified with live PostgreSQL and real demo-user sign-in |
 | 7 | Atomic multi-org submission; independent decisions; unique approved calendar events and isolation tests | Implemented internal calendar and independent approvals; live isolation/partial approval tests pass |
-| 8 | Expand OpenAPI and frontend integration examples; verify real browser authentication and CORS with Kopano | Pending |
+| 8 | Expand OpenAPI and frontend integration examples; verify real browser authentication and CORS with Kopano | OpenAPI 0.5; 24 real browser checks passed; inbox All statuses mismatch recorded for coordination |
 | 9 | Full test suite, production build, security review, persisted end-to-end demo and documentation | Pending |
 | 10 | After core acceptance passes: Google OAuth, encrypted refresh tokens, outbox worker, shared events and optional org-only invitations | Contract/design/setup proposal documented; implementation pending core and Google configuration |
 
 Phases 5–7 are implemented on backend/victor using the existing schema; no new migration was needed. Shared API contract/frontend files are unchanged. Next: admin membership/allocation endpoints with the documented contract clarifications, browser integration with Kopano, broader core QA, then Google integration after core acceptance.
+
+Admin membership listing is implemented and the three demo managers now have organisation-scoped ADMIN roles. Frontend source remains unchanged. See TESTING.md for actual browser evidence, remaining inbox filtering/dependency findings, and Google sign-in setup status. Admin editing and Google Calendar integration remain pending.

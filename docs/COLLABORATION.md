@@ -46,3 +46,13 @@ Balances, submission/history and pending cancellation match existing api.balance
 ## Manager/calendar integration
 
 Existing api.managerRequests/decideRequest/calendar methods now have backend implementations. Select the active organisation, then enforce UI role visibility from /me; the backend independently enforces the same role and assigned-team scope. Queue defaults to pending, with other status filters providing team history. Decline comment is required. After a decision refetch queue, employee history/balance and the selected organisation calendar. Calendar fields omit private reason/type/comment. Partial approval shows only the approved organisation's event. Full browser verification remains pending; no frontend components were modified. Admin APIs and Google integration remain pending.
+
+
+## Verified frontend and admin handoff
+
+The existing admin list now calls a working GET /admin/memberships endpoint with the existing shared Membership shape; editing remains pending. The three demo managers are ADMINs in their respective organisations. The user's explicit instruction was to keep frontend components unchanged and provide Google setup instructions only.
+
+Actual Chrome verification passed 24 checks across all six demo accounts; see TESTING.md and verification/frontend-results.json. Kopano follow-up: resolve the Manager inbox “All statuses” mismatch (frontend omits status, backend defaults PENDING), review five frontend dependency audit entries (two critical test-tooling entries), and coordinate a Google sign-in entry point after provider setup. Email auth is currently enabled; Google is currently disabled. Setup steps are in SUPABASE_SIGN_IN_SETUP.md. New Google identities still need trusted provisioning of app profiles and organisation memberships; never grant ADMIN through browser metadata.
+
+
+The latest main was pulled before this admin integration. Its Vercel Services routing, renamed application.ts factory, explicit ESM entry point, branding changes and dedicated ADMIN Leave approvals UI are preserved. The new membership-list service is injected into both standalone and Vercel entry points. Our changes do not modify the incoming frontend. Historical screenshots show the UI before the incoming branding/approval changes; their timestamped verification remains historical evidence. Production browser verification still requires the actual deployed URL.

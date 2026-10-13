@@ -22,6 +22,7 @@
     "test:database": "node --env-file=.env node_modules/vitest/vitest.mjs run tests/database.integration.test.ts tests/leave.integration.test.ts",
     "db:seed:accounts": "tsx --env-file=.env prisma/seed-accounts.ts",
     "auth:check:demo": "tsx --env-file=.env src/scripts/check-demo-auth.ts",
+    "demo:promote:admins": "tsx --env-file=.env src/scripts/promote-demo-admins.ts",
     "leave:check:demo": "tsx --env-file=.env src/scripts/check-demo-leave.ts",
     "manager:check:demo": "tsx --env-file=.env src/scripts/check-demo-manager.ts"
   },

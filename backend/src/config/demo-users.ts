@@ -5,9 +5,9 @@ export type DemoUser = { email: string; fullName: string; memberships: DemoMembe
 
 // Reserved example.com addresses; createUser sends no invitations or email.
 export const demoUsers: DemoUser[] = [
-  { email: 'thabo.demo@example.com', fullName: 'Thabo Demo', memberships: [{ slug: 'dlab', role: 'MANAGER' }] },
-  { email: 'lerato.demo@example.com', fullName: 'Lerato Demo', memberships: [{ slug: 'field-institute', role: 'MANAGER' }] },
-  { email: 'sibusiso.demo@example.com', fullName: 'Sibusiso Demo', memberships: [{ slug: 'strideshift-global', role: 'MANAGER' }] },
+  { email: 'thabo.demo@example.com', fullName: 'Thabo Demo', memberships: [{ slug: 'dlab', role: 'ADMIN' }] },
+  { email: 'lerato.demo@example.com', fullName: 'Lerato Demo', memberships: [{ slug: 'field-institute', role: 'ADMIN' }] },
+  { email: 'sibusiso.demo@example.com', fullName: 'Sibusiso Demo', memberships: [{ slug: 'strideshift-global', role: 'ADMIN' }] },
   { email: 'naledi.admin.demo@example.com', fullName: 'Naledi Demo Admin', memberships: [
     { slug: 'dlab', role: 'ADMIN' }, { slug: 'field-institute', role: 'ADMIN' }, { slug: 'strideshift-global', role: 'ADMIN' },
   ] },

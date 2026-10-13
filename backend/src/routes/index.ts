@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getHealth } from '../controllers/health.js';
 import { z } from 'zod';
-import { getMe, getOrganisations, getLeaveTypes } from '../controllers/access.js';
+import { getMe, getOrganisations, getLeaveTypes, getAdminMemberships } from '../controllers/access.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import type { AccessServices } from '../services/access.js';
@@ -26,5 +26,6 @@ export function createApiRouter(services?: AccessServices) {
   router.get('/manager/leave-requests', validate(managerQuery, 'query'), manager.queue);
   router.post('/manager/leave-requests/:id/decision', manager.decide);
   router.get('/calendar-events', validate(calendarQuery, 'query'), manager.calendar);
+  router.get('/admin/memberships', validate(z.object({ organisationId: z.uuid() }).strict(), 'query'), getAdminMemberships(services));
   return router;
 }

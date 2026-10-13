@@ -22,10 +22,10 @@ describe('HTTP foundation', () => {
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: { code: 'NOT_FOUND', message: 'Endpoint not found', details: {} } });
   });
-  it('allows the configured Vite origin', async () => {
-    const response = await request(app).get('/api/v1/health').set('Origin', 'http://localhost:5173');
+  it.each(['http://localhost:5173', 'http://127.0.0.1:5173'])('allows the local Vite origin %s', async (origin) => {
+    const response = await request(app).get('/api/v1/health').set('Origin', origin);
     expect(response.status).toBe(200);
-    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5173');
+    expect(response.headers['access-control-allow-origin']).toBe(origin);
   });
   it('allows bearer-token preflight', async () => {
     const response = await request(app).options('/api/v1/leave-requests')
@@ -56,7 +56,7 @@ describe('HTTP foundation', () => {
 
 describe('configuration', () => {
   it('uses documented development defaults', () => {
-    expect(readEnvironment({})).toEqual({ NODE_ENV: 'development', PORT: 3001, FRONTEND_ORIGINS: ['http://localhost:5173'] });
+    expect(readEnvironment({})).toEqual({ NODE_ENV: 'development', PORT: 3001, FRONTEND_ORIGINS: ['http://localhost:5173', 'http://127.0.0.1:5173'] });
   });
   it.each(['0', '65536', 'abc', '3001.5'])('rejects invalid port %s', (PORT) => {
     expect(() => readEnvironment({ PORT })).toThrow('PORT');

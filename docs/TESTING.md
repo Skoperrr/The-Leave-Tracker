@@ -135,3 +135,42 @@ Frontend changes were preserved from main; this merge did not rerun browser scre
 ## Remaining work after integration
 
 Next implement admin membership/allocation paths with their own permission/concurrency tests, respecting the shared lock convention and resolving documented contract gaps. Verify the full React employee/manager experience with Kopano, review deployment/security, and supply the missing brief before declaring the whole assessment demo ready. Google OAuth/sync/invitation tests follow core verification and provider configuration. Previously documented Prisma tooling audit findings remain unresolved.
+
+
+## Admin roles and unchanged frontend verification — 13 October 2026
+
+At the user's request, Thabo, Lerato and Sibusiso were promoted from MANAGER to ADMIN only in D-Lab, The Field Institute and StrideShift Global respectively. The explicit demo promotion authenticated the marked fictional Naledi administrator and wrote three role-change audits in one database transaction. Reporting assignments, allocations and employee roles remain unchanged. The ordinary seed preserves existing roles; defaults for new fictional manager memberships are now ADMIN.
+
+GET /api/v1/admin/memberships implements the existing shared Membership list shape. Permissions are rechecked in a database read transaction. Lists are organisation-scoped, include inactive memberships and omit user identity/other private fields. Membership/allocation editing remains pending.
+
+Verified checks:
+
+- Backend typecheck, build and 123 local tests passed (33 opt-in live integration tests skipped in that run; their previous passing results remain recorded above). Eight new admin tests cover role/membership denial, scoped query and exact response fields, authentication and strict query validation.
+- Updated auth:check:demo passed all six actual Supabase logins, expected organisation roles/manager assignments, and real admin endpoint isolation. Each demo administrator can list only authorised organisations; employees receive 403.
+- Frontend's unchanged lockfile installed successfully; all 32 existing tests and the TypeScript/Vite production build passed. Build reported a JavaScript chunk above 500 kB.
+- Isolated headless Chrome ran the actual frontend at localhost:5173 against Express localhost:3001 and hosted Supabase. **24 checks passed**, including six user logins, sign-out, employee/admin navigation, mobile dashboard width, organisation switching, linked five-day submission, admin membership rendering, real decline, independently pending sibling, employee cancellation, existing approved calendar/privacy, employee role guards and no unhandled runtime exceptions or API 5xx responses.
+- Browser QA did not repeat a live approval: it verified the already-approved calendar samples. New linked requests for 30 November–4 December ended DECLINED in D-Lab and CANCELLED in Field Institute. Two requests from an interrupted QA attempt were cancelled using Ayanda's authenticated API. Read-only balance checks confirmed zero pending reservations and annual balances of 10 remaining / 5 approved in both organisations after verification. These fictional request/audit records remain persisted.
+- Public Auth settings were read: email provider enabled, Google provider disabled. Actual Google consent/login remains unverified, and no Google button was added at the user's explicit request.
+- Git diff confirms no frontend source, component, package or lockfile modifications. Local ignored frontend/.env contains only public Supabase config and API URL. Temporary isolated Chrome profiles were removed; evidence contains no passwords or tokens.
+
+Evidence: verification/frontend-results.json and seven PNG screenshots in verification/. Reproduce with API/Vite running and `node backend/scripts/verify-frontend.mjs` from the repository root; Node 22+ and installed Chrome are required. LEAVE_TRACKER_BROWSER can override the browser executable. This uses only ignored fictional credentials and adds demonstration request/audit records. If interrupted after submission, resolve its pending fictional requests before rerunning; overlap rejection is intentional.
+
+Known integration finding: Manager inbox “All statuses” omits status, while the backend defaults an omitted status to PENDING. Therefore decided requests are absent in that view; explicit Approved/Declined/Cancelled filters work. This requires frontend/backend coordination before changing semantics. It is recorded for Kopano, not silently changed during verification.
+
+The frontend npm audit reports five dependency entries: three moderate (React Router / react-router-dom and @vitest/mocker) and two critical (tinypool and Vitest test tooling). npm proposes major-version upgrades; none were applied because the user asked to keep the frontend unchanged. Do not equate passing flow checks with production security acceptance. Prior backend Prisma tooling findings also remain unresolved.
+
+
+## Local origin permission diagnostic — 13 October 2026
+
+A user reported a FORBIDDEN message while submitting as Ayanda. The local backend allowed only localhost:5173, whereas Vite displays 127.0.0.1:5173. Live health checks confirmed the latter origin received 403 and localhost received 200. Development defaults, .env.example and ignored local .env now explicitly allow both exact local origins; unrelated origins still receive 403 and production still requires HTTPS. Frontend source remains unchanged. The user's browser address was requested; origin mismatch is a confirmed local defect, but attribution to that specific browser session remains unconfirmed.
+
+Ayanda's live profile had active EMPLOYEE memberships in D-Lab and The Field Institute. A real-token linked one-day submission for 7 December 2026 returned 201 with two requests. Both diagnostic requests were cancelled through the authenticated API afterward. Backend typecheck and all 24 focused foundation tests passed. Running-server checks after reload returned 200 for the Vite loopback origin and 403 for an unlisted origin. This diagnostic adds only fictional cancelled request/audit records; no employee role was elevated.
+
+A follow-up real-token submission with Origin http://127.0.0.1:5173 returned 201, two linked requests and the exact matching Access-Control-Allow-Origin header. Both temporary requests were cancelled. Thus both local addresses now support the employee submission API.
+
+
+## Pull-before-push integration — 13 October 2026
+
+Pulled origin/main through d03b1e4 before integrating local admin roles/listing and verification work. Preserved incoming Vercel Services configuration, application.ts rename, explicit index.mts entry point, build cleanup, frontend branding and admin Leave approvals UI. Injected the new admin service into both backend entry points and updated the new test's import for the renamed factory. Our diff leaves the incoming frontend unchanged.
+
+Integrated backend typecheck/build and **127 local tests** passed; 33 opt-in live integration tests were not rerun. Integrated frontend production build and **35 tests** passed. A separate smoke loaded the actual compiled Vercel index.mjs app on an ephemeral local listener: real Supabase logins for Thabo and Ayanda verified profile access and ADMIN-versus-EMPLOYEE membership-list permissions. This verifies the Vercel entry point locally, not the hosted deployment. Secret scan passed for 123 reviewable text files. Prior dependency findings and large frontend chunk warning remain. Historical browser screenshots/results were produced before the incoming branding/approval UI changes; hosted browser verification still needs the deployment URL.

@@ -8,6 +8,7 @@ import { createAccessRepository } from './repositories/access.js';
 import { createLeaveRepository } from './repositories/leave.js';
 import { createLeaveService } from './services/leave.js';
 import { createManagerService } from './services/manager.js';
+import { createAdminService } from './services/admin.js';
 
 // Vercel owns the listener and function lifecycle. Reuse the pool per instance;
 // keep server.ts for standalone development and its database startup check.
@@ -21,5 +22,6 @@ app.use(createApp(environment, {
   repository: createAccessRepository(database),
   leave: createLeaveService(repository),
   manager: createManagerService(repository),
+  admin: createAdminService(repository),
 }));
 export default app;
