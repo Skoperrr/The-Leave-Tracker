@@ -68,3 +68,9 @@ select it instead of the configured `src/index.mts` function entrypoint.
 The root package declares ES module semantics for deployment packaging. The
 backend entrypoint uses `.mts`, compiling to `dist/index.mjs` so its module format
 is explicit. Builds remove stale output before compiling.
+
+The backend service explicitly sets `outputDirectory` to `.`. This prevents the
+Services builder from promoting the compiled `dist/index.mjs` to the function
+root while retaining dependencies under `backend/node_modules`. Instead Vercel
+packages the source entrypoint with dependency paths relative to the service.
+Keep the frontend output directory as `dist`.
