@@ -1,0 +1,21 @@
+{
+  "route": "/sign-in",
+  "views": [
+    {
+      "view": "desktop",
+      "viewportWidth": 1440,
+      "contentWidth": 1440,
+      "formVisible": true,
+      "configurationRequired": true
+    },
+    {
+      "view": "mobile",
+      "viewportWidth": 390,
+      "contentWidth": 390,
+      "formVisible": true,
+      "configurationRequired": true
+    }
+  ],
+  "browserExceptions": 0,
+  "note": "Live backend flows require configured Supabase credentials and the Express API."
+}
