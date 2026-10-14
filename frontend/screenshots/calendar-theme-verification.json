@@ -15,7 +15,10 @@
       "sidebarColour": "rgb(26, 41, 75)",
       "bottomItems": 0,
       "drawerHidden": false,
-      "sidebarToggleVerified": true
+      "sidebarToggleVerified": true,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     },
     {
       "view": "dlab-mobile",
@@ -31,7 +34,10 @@
       "sidebarColour": "rgb(26, 41, 75)",
       "bottomItems": 5,
       "drawerHidden": true,
-      "sidebarToggleVerified": true
+      "sidebarToggleVerified": true,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     },
     {
       "view": "field-desktop",
@@ -47,7 +53,10 @@
       "sidebarColour": "rgb(8, 8, 8)",
       "bottomItems": 0,
       "drawerHidden": false,
-      "sidebarToggleVerified": true
+      "sidebarToggleVerified": true,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     },
     {
       "view": "field-mobile",
@@ -63,7 +72,10 @@
       "sidebarColour": "rgb(8, 8, 8)",
       "bottomItems": 5,
       "drawerHidden": true,
-      "sidebarToggleVerified": true
+      "sidebarToggleVerified": true,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     },
     {
       "view": "stride-desktop",
@@ -79,7 +91,10 @@
       "sidebarColour": "rgb(24, 43, 75)",
       "bottomItems": 0,
       "drawerHidden": false,
-      "sidebarToggleVerified": true
+      "sidebarToggleVerified": true,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     },
     {
       "view": "stride-mobile",
@@ -95,7 +110,10 @@
       "sidebarColour": "rgb(24, 43, 75)",
       "bottomItems": 5,
       "drawerHidden": true,
-      "sidebarToggleVerified": true
+      "sidebarToggleVerified": true,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     }
   ],
   "browserExceptions": 0,

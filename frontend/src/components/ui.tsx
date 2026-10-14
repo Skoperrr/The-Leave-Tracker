@@ -2,15 +2,31 @@ import { useState, type ReactNode } from "react";
 import { supabase } from "../auth/supabase";
 import { errorMessage } from "../api/errors";
 import type { ApiEnvelope, LeaveStatus } from "../types/api";
+// Domino loader adapted from the user-provided Uiverse.io snippet by satyamchaudharydev.
+export function DominoSpinner({ compact = false }: { compact?: boolean }) {
+  return (
+    <span
+      className={`domino-spinner${compact ? " compact" : ""}`}
+      aria-hidden="true"
+    >
+      {Array.from({ length: 8 }, (_, index) => (
+        <span key={index} />
+      ))}
+    </span>
+  );
+}
 export function Loading({
   label = "Loading your workspace",
 }: {
   label?: string;
 }) {
   return (
-    <div className="loading" role="status">
-      <span className="spinner" aria-hidden="true" />
-      {label}…<div className="skeleton" />
+    <div className="loading" role="status" aria-live="polite">
+      <div className="loading-heading">
+        <DominoSpinner />
+        <span>{label}…</span>
+      </div>
+      <div className="skeleton" />
       <div className="skeleton short" />
     </div>
   );

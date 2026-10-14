@@ -398,6 +398,11 @@ describe("Frontend integration flows", () => {
     expect(
       screen.getByRole("img", { name: "D-Lab header logo" }),
     ).toBeInTheDocument();
+    expect(
+      screen
+        .getByRole("button", { name: "Collapse sidebar" })
+        .closest(".sidebar"),
+    ).not.toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Collapse sidebar" }),
     );

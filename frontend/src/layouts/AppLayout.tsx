@@ -195,6 +195,18 @@ export function WorkspaceShell({
           >
             <Brand />
           </NavLink>
+          {!mobile && (
+            <button
+              type="button"
+              className="sidebar-toggle sidebar-rail-toggle icon-button"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-controls="workspace-sidebar"
+              aria-expanded={!collapsed}
+              onClick={() => setCollapsed((value) => !value)}
+            >
+              <NavIcon name={collapsed ? "expand" : "collapse"} />
+            </button>
+          )}
           {mobile && (
             <button
               className="sidebar-close icon-button"
@@ -274,25 +286,27 @@ export function WorkspaceShell({
       </aside>
       <div className="workspace" ref={workspace}>
         <div className="topbar">
-          <button
-            className="sidebar-toggle icon-button"
-            aria-label={
-              mobile
-                ? "Open navigation panel"
-                : collapsed
-                  ? "Expand sidebar"
-                  : "Collapse sidebar"
-            }
-            aria-controls="workspace-sidebar"
-            aria-expanded={mobile ? panelOpen : !collapsed}
-            onClick={() =>
-              mobile ? openPanel() : setCollapsed((value) => !value)
-            }
-          >
-            <NavIcon
-              name={mobile ? "menu" : collapsed ? "expand" : "collapse"}
-            />
-          </button>
+          {mobile && (
+            <button
+              className="sidebar-toggle icon-button"
+              aria-label={
+                mobile
+                  ? "Open navigation panel"
+                  : collapsed
+                    ? "Expand sidebar"
+                    : "Collapse sidebar"
+              }
+              aria-controls="workspace-sidebar"
+              aria-expanded={mobile ? panelOpen : !collapsed}
+              onClick={() =>
+                mobile ? openPanel() : setCollapsed((value) => !value)
+              }
+            >
+              <NavIcon
+                name={mobile ? "menu" : collapsed ? "expand" : "collapse"}
+              />
+            </button>
+          )}
           <span className="workspace-institution">
             <span className="institution-code">{theme.code}</span>
             {theme.logo && (

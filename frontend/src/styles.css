@@ -2228,3 +2228,331 @@ textarea[aria-invalid="true"] {
 .app-shell input[type="radio"] {
   accent-color: var(--accent);
 }
+
+/* Motion and buttons inspired by CSSButtons; domino loader credit: satyamchaudharydev, Uiverse.io. */
+.sidebar-rail-toggle {
+  width: 34px;
+  height: 34px;
+  background: var(--sidebar-hover) !important;
+  color: #fff !important;
+  border-color: var(--sidebar-border) !important;
+  border-radius: 10px !important;
+}
+.sidebar-brand-row .brand {
+  min-width: 0;
+  font-size: 1rem;
+  gap: 9px;
+}
+.sidebar-brand-row .brand-wordmark {
+  max-width: 125px;
+}
+.sidebar-brand-row .brand small {
+  letter-spacing: 1.4px;
+  font-size: 0.46rem;
+}
+.sidebar-collapsed .sidebar-brand-row {
+  flex-direction: column;
+  gap: 20px;
+}
+.sidebar-collapsed .sidebar-rail-toggle {
+  width: 42px;
+  height: 36px;
+}
+.loading-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.domino-spinner {
+  position: relative;
+  display: inline-flex;
+  width: 112px;
+  height: 48px;
+  flex-shrink: 0;
+  color: var(--green);
+}
+.domino-spinner > span {
+  position: absolute;
+  top: 20px;
+  left: calc(5px + var(--domino-index) * 12px);
+  width: 24px;
+  height: 5px;
+  border-radius: 3px;
+  background: currentColor;
+  transform-origin: 2px center;
+  animation: dominos 1.1s ease-in-out infinite;
+  animation-delay: calc(var(--domino-index) * 0.125s);
+  box-shadow: 1px 2px 3px rgb(0 0 0 / 15%);
+}
+.domino-spinner > span:nth-child(1) {
+  --domino-index: 7;
+}
+.domino-spinner > span:nth-child(2) {
+  --domino-index: 6;
+}
+.domino-spinner > span:nth-child(3) {
+  --domino-index: 5;
+}
+.domino-spinner > span:nth-child(4) {
+  --domino-index: 4;
+}
+.domino-spinner > span:nth-child(5) {
+  --domino-index: 3;
+}
+.domino-spinner > span:nth-child(6) {
+  --domino-index: 2;
+}
+.domino-spinner > span:nth-child(7) {
+  --domino-index: 1;
+}
+.domino-spinner > span:nth-child(8) {
+  --domino-index: 0;
+}
+.app-shell .domino-spinner {
+  color: var(--accent);
+}
+.domino-spinner.compact,
+.app-shell .domino-spinner.compact {
+  width: 38px;
+  height: 20px;
+  color: currentColor;
+}
+.domino-spinner.compact > span {
+  top: 9px;
+  left: calc(2px + var(--domino-index) * 4px);
+  width: 9px;
+  height: 2px;
+  transform-origin: 1px center;
+}
+@keyframes dominos {
+  0%,
+  40%,
+  100% {
+    transform: rotate(0);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  75%,
+  80% {
+    transform: rotate(90deg);
+    opacity: 1;
+  }
+}
+.primary,
+.secondary,
+.icon-button,
+.text-button,
+.main-nav a,
+.bottom-nav a,
+.bottom-nav button {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+.primary {
+  background-image: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgb(255 255 255 / 25%) 45%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  box-shadow:
+    inset 0 -3px 0 rgb(0 0 0 / 15%),
+    0 6px 14px rgb(0 0 0 / 12%);
+}
+.primary:not(:disabled):not([aria-disabled="true"]):hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 -3px 0 rgb(0 0 0 / 10%),
+    0 10px 22px rgb(0 0 0 / 20%);
+  animation: button-sheen 650ms ease-out;
+}
+.primary:not(:disabled):active,
+.secondary:not(:disabled):active,
+.icon-button:not(:disabled):active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: none;
+}
+.secondary:not(:disabled):hover,
+.icon-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgb(0 0 0 / 10%);
+}
+.app-shell .primary {
+  background-image: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgb(255 255 255 / 35%) 45%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-position: 150% 0;
+}
+@keyframes button-sheen {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -80% 0;
+  }
+}
+.signin-story {
+  position: relative;
+  overflow: hidden;
+}
+.signin-story::before {
+  content: "";
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  border: 1px solid rgb(220 240 195 / 18%);
+  border-radius: 50%;
+  right: -190px;
+  top: 12%;
+  box-shadow:
+    0 0 0 55px rgb(220 240 195 / 4%),
+    0 0 0 110px rgb(220 240 195 / 3%);
+  animation: signin-orbit 14s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.signin-story > * {
+  position: relative;
+}
+.signin-story .brand {
+  animation: arrive 600ms both;
+}
+.signin-story h1 {
+  animation: arrive 800ms 120ms both;
+}
+.signin-story .eyebrow,
+.signin-story p {
+  animation: arrive 750ms 220ms both;
+}
+.signin-form > div {
+  animation: signin-reveal 750ms 150ms both;
+}
+.signin-form input {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.signin-form input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgb(18 61 54 / 8%);
+}
+.story-art span {
+  animation: story-float 6s ease-in-out infinite;
+}
+.story-art span:nth-child(2) {
+  animation-delay: -2s;
+}
+.story-art span:nth-child(3) {
+  animation-delay: -4s;
+}
+.app-shell .page-heading {
+  animation: arrive 450ms both;
+}
+.app-shell .panel,
+.app-shell .request-card,
+.app-shell .balance-card {
+  animation: arrive 500ms 60ms both;
+  transition:
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+.app-shell .balance-card:nth-child(2) {
+  animation-delay: 120ms;
+}
+.app-shell .balance-card:nth-child(3) {
+  animation-delay: 180ms;
+}
+.app-shell .request-card:hover,
+.app-shell .balance-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 14px 32px rgb(0 0 0 / 15%);
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes signin-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes story-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(3deg);
+  }
+}
+@keyframes signin-orbit {
+  from {
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    transform: translateY(35px) scale(1.08);
+  }
+}
+@media (hover: none) {
+  .primary:not(:disabled):hover,
+  .secondary:not(:disabled):hover,
+  .icon-button:not(:disabled):hover {
+    transform: none;
+    animation: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .domino-spinner > span {
+    transform: rotate(90deg);
+    opacity: 0.85;
+  }
+  .primary:not(:disabled):hover,
+  .secondary:not(:disabled):hover,
+  .icon-button:not(:disabled):hover {
+    transform: none;
+  }
+}
+.primary:not(:disabled):hover,
+.app-shell .primary:not(:disabled):hover {
+  background-image: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgb(255 255 255 / 30%) 45%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+}
+@media (max-width: 760px) {
+  .app-shell.sidebar-collapsed .sidebar-brand-row {
+    flex-direction: row;
+  }
+}

@@ -5,7 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../auth/AuthProvider";
 import { supabase } from "../auth/supabase";
 import { signInSchema, type SignInValues } from "../hooks/validation";
-import { ErrorNotice, FieldError, Loading } from "../components/ui";
+import {
+  DominoSpinner,
+  ErrorNotice,
+  FieldError,
+  Loading,
+} from "../components/ui";
 import { Brand } from "../components/Brand";
 export function SignIn() {
   const { session, loading, expired, authError, recovering } = useAuth();
@@ -114,7 +119,14 @@ export function SignIn() {
               className="primary full"
               disabled={!supabase || isSubmitting}
             >
-              {isSubmitting ? "Signing in…" : "Sign in"}
+              {isSubmitting ? (
+                <>
+                  <DominoSpinner compact />
+                  Signing in…
+                </>
+              ) : (
+                "Sign in"
+              )}
             </button>
           </form>
           <p className="signin-help">

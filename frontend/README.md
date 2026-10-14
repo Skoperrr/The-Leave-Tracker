@@ -222,3 +222,22 @@ themes. Capture the calendar using `npm run screenshots -- themes calendar`.
 the corresponding `calendar-theme-*` screenshots include mobile admin navigation
 and desktop side agendas. Fixture tests verify the role-specific settings link,
 selected day counts and private-field exclusion.
+
+## Motion, loader and sidebar controls
+
+The desktop collapse/expand toggle sits in the sidebar beside the brand, or below
+its mark when collapsed. Mobile keeps the header menu trigger and drawer close
+button. Primary buttons use a brief sheen, raised hover and pressed feedback;
+secondary/icon controls use subtler movement. These effects are original CSS
+inspired by [CSSButtons](https://cssbuttons.io/), retaining our institution tokens.
+Sign-in uses staggered entry reveals and floating decorative artwork. Cards and
+page headings have short entry animations, with no artificial network delay.
+
+`DominoSpinner` adapts the supplied Uiverse.io domino snippet by
+**satyamchaudharydev**, retaining eight staggered bars while removing its negative
+margin and fixed white colour. Page loaders follow the selected institution;
+the compact variant uses the sign-in button's text colour. Loading remains a
+labelled live status; decorative bars are hidden from assistive technology.
+Reduced-motion preferences disable animations and transitions and show static
+loader bars. Browser captures verify eight bars, reduced-motion behaviour and
+no loader-induced page overflow.

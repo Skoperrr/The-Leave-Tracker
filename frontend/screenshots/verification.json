@@ -6,14 +6,24 @@
       "viewportWidth": 1440,
       "contentWidth": 1440,
       "formVisible": true,
-      "configurationRequired": true
+      "dashboardVisible": false,
+      "sampleDataLabel": false,
+      "configurationRequired": false,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     },
     {
       "view": "mobile",
       "viewportWidth": 390,
       "contentWidth": 390,
       "formVisible": true,
-      "configurationRequired": true
+      "dashboardVisible": false,
+      "sampleDataLabel": false,
+      "configurationRequired": false,
+      "dominoBars": 8,
+      "reducedMotion": true,
+      "loaderFits": true
     }
   ],
   "browserExceptions": 0,

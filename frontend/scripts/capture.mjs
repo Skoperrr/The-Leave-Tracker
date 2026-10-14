@@ -153,7 +153,7 @@ try {
         "Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))])",
       awaitPromise: true,
     });
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 900));
     const result = await send("Runtime.evaluate", {
       expression:
         '({ viewportWidth: innerWidth, contentWidth: document.documentElement.scrollWidth, formVisible: Boolean(document.querySelector("#email")), dashboardVisible: Boolean(document.querySelector(".balance-number")), sampleDataLabel: document.body.innerText.includes("Read-only preview"), configurationRequired: document.body.innerText.includes("Authentication is not configured") })',
@@ -251,6 +251,23 @@ try {
       if (!closed.result.value)
         throw new Error("Sidebar did not close/expand correctly.");
     }
+    await send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+    });
+    const motion = await send("Runtime.evaluate", {
+      expression: `(() => {
+        const loader = document.createElement('span'); loader.className = 'domino-spinner'; loader.setAttribute('aria-hidden', 'true');
+        for (let index = 0; index < 8; index++) loader.appendChild(document.createElement('span'));
+        (document.querySelector('main') ?? document.body).appendChild(loader);
+        const result = { dominoBars: loader.children.length, reducedMotion: getComputedStyle(loader.firstElementChild).animationName === 'none', loaderFits: document.documentElement.scrollWidth <= innerWidth };
+        loader.remove(); return result;
+      })()`,
+      returnByValue: true,
+    });
+    Object.assign(dimensions, motion.result.value);
+    if (!dimensions.reducedMotion || !dimensions.loaderFits)
+      throw new Error("Loader or reduced-motion verification failed.");
+    await send("Emulation.setEmulatedMedia", { features: [] });
     evidence.push({ view: view.name, ...dimensions });
   }
   if (exceptions.length)
