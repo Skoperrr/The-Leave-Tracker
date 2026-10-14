@@ -232,24 +232,27 @@ export function CalendarSettings() {
                         calendar. Sync reports show recipient counts, never
                         email addresses, and do not prove delivery.
                       </p>
-                      <button
-                        className="primary"
-                        disabled={
-                          !unique.some((item) => item.id === calendarId)
-                        }
-                      >
-                        Save calendar settings
-                      </button>
+                      <div className="calendar-settings-actions button-row">
+                        <button
+                          className="primary"
+                          disabled={
+                            !unique.some((item) => item.id === calendarId)
+                          }
+                        >
+                          Save calendar settings
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          disabled={action.isPending || !data.calendarId}
+                          onClick={() => action.mutate("test")}
+                        >
+                          Verify calendar access
+                        </button>
+                      </div>
                     </fieldset>
                   </form>
                 )}
-                <button
-                  className="secondary"
-                  disabled={action.isPending || !data.calendarId}
-                  onClick={() => action.mutate("test")}
-                >
-                  Verify calendar access
-                </button>
               </section>
             )}
             <section className="panel">

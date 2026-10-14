@@ -5,24 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../auth/AuthProvider";
 import { supabase } from "../auth/supabase";
 import { signInSchema, type SignInValues } from "../hooks/validation";
-import { DominoSpinner, ErrorNotice, FieldError } from "../components/ui";
+import { ErrorNotice, FieldError } from "../components/ui";
+import { AuthLoading } from "../components/AuthLoading";
 import { Brand } from "../components/Brand";
-function SignInLoading({ label }: { label: string }) {
-  return (
-    <main className="signin-loading">
-      <div className="brand">
-        <Brand />
-      </div>
-      <div className="signin-loading-content" role="status" aria-live="polite">
-        <div className="signin-loading-animation">
-          <DominoSpinner />
-        </div>
-        <h1>{label}…</h1>
-        <p>Getting your workspace ready.</p>
-      </div>
-    </main>
-  );
-}
 export function SignIn() {
   const { session, loading, expired, authError, recovering } = useAuth();
   const location = useLocation();
@@ -33,24 +18,24 @@ export function SignIn() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignInValues>({ resolver: zodResolver(signInSchema) });
-  if (loading || isSubmitting)
-    return (
-      <SignInLoading
-        label={loading ? "Restoring your session" : "Signing in"}
-      />
-    );
+  if (loading || isSubmitting) return <AuthLoading />;
   if (recovering) return <Navigate to="/reset-password" replace />;
   if (session) {
     const from = (location.state as { from?: string } | null)?.from;
     return (
-      <Navigate
-        to={
-          from?.startsWith("/") && !from.startsWith("//") && from !== "/sign-in"
-            ? from
-            : "/"
-        }
-        replace
-      />
+      <>
+        <Navigate
+          to={
+            from?.startsWith("/") &&
+            !from.startsWith("//") &&
+            from !== "/sign-in"
+              ? from
+              : "/"
+          }
+          replace
+        />
+        <AuthLoading />
+      </>
     );
   }
   return (

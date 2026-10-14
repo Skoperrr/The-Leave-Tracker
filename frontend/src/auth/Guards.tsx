@@ -4,7 +4,8 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import { OrganizationProvider, useOrganisation } from "./OrganizationProvider";
 import { api } from "../api/endpoints";
-import { ErrorNotice, Loading, SignOutButton } from "../components/ui";
+import { ErrorNotice, SignOutButton } from "../components/ui";
+import { AuthLoading } from "../components/AuthLoading";
 import { ApiClientError } from "../api/errors";
 import type { Role } from "../types/api";
 export function RequireAuth() {
@@ -25,13 +26,13 @@ export function RequireAuth() {
     },
     enabled: Boolean(session) && !recovering,
   });
-  if (loading) return <Loading />;
+  if (loading) return <AuthLoading />;
   if (recovering) return <Navigate to="/reset-password" replace />;
   if (!session)
     return (
       <Navigate to="/sign-in" state={{ from: location.pathname }} replace />
     );
-  if (me.isPending) return <Loading label="Loading your profile" />;
+  if (me.isPending) return <AuthLoading />;
   if (
     me.isError &&
     me.error instanceof ApiClientError &&

@@ -1,5 +1,6 @@
 import type { LeaveBalance, LeaveRequest, LeaveType } from "../types/api";
 import { formatDate } from "../hooks/dates";
+import { Link } from "react-router-dom";
 
 export function BalanceCards({
   balances,
@@ -43,7 +44,13 @@ export function BalanceCards({
   );
 }
 
-export function UpcomingLeaveList({ requests }: { requests: LeaveRequest[] }) {
+export function UpcomingLeaveList({
+  requests,
+  preview = false,
+}: {
+  requests: LeaveRequest[];
+  preview?: boolean;
+}) {
   return (
     <ul className="upcoming-list">
       {requests.map((request) => (
@@ -52,7 +59,17 @@ export function UpcomingLeaveList({ requests }: { requests: LeaveRequest[] }) {
             {request.startDate.slice(8)}
           </span>
           <div>
-            <strong>{request.leaveTypeName}</strong>
+            <strong>
+              <Link
+                to={
+                  preview
+                    ? "/preview/calendar"
+                    : `/calendar?date=${request.startDate}`
+                }
+              >
+                {request.leaveTypeName}
+              </Link>
+            </strong>
             <p>
               {formatDate(request.startDate)} — {formatDate(request.endDate)}
             </p>

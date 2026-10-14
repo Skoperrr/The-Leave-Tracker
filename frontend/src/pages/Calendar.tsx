@@ -1,15 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useOrganisation } from "../auth/OrganizationProvider";
 import { api } from "../api/endpoints";
 import { useApiQuery } from "../hooks/queries";
-import { today, monthRange, shiftMonth, parseDate } from "../hooks/dates";
+import {
+  today,
+  monthRange,
+  shiftMonth,
+  parseDate,
+  isDateOnly,
+} from "../hooks/dates";
 import { ErrorNotice, Loading, PageHeading } from "../components/ui";
 import { CalendarWorkspace } from "../components/CalendarWorkspace";
 export function Calendar() {
   const { membership } = useOrganisation();
   const org = membership.organisationId;
-  const [month, setMonth] = useState(today().slice(0, 7));
-  const [selectedDate, setSelectedDate] = useState(today());
+  const [params] = useSearchParams();
+  const requestedDate = params.get("date") ?? "";
+  const initialDate = isDateOnly(requestedDate) ? requestedDate : today();
+  const [month, setMonth] = useState(initialDate.slice(0, 7));
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  useEffect(() => {
+    const date = isDateOnly(requestedDate) ? requestedDate : today();
+    setMonth(date.slice(0, 7));
+    setSelectedDate(date);
+  }, [requestedDate]);
   const { from, to } = monthRange(month);
   const events = useApiQuery(["calendar", org, from, to], (signal) =>
     api.calendar(org, from, to, signal),

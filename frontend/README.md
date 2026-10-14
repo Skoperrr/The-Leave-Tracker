@@ -247,3 +247,27 @@ Sign-in includes an accessible Show/Hide password control. It changes only the
 input's visibility, preserves its value and autocomplete, and never submits
 the form. After a failed sign-in, entered fields remain available for retry.
 Tests cover visibility toggling, pending sign-in progress and failure recovery.
+
+Session restoration, sign-in submission and the authenticated profile gate share
+`AuthLoading` with the same centred domino loader and “Opening your workspace”
+message. Profile loading no longer switches to a second skeleton screen.
+An auth-flow regression test delays profile loading to verify the transition
+before rendering the dashboard; profile errors and setup/access states remain
+available after loading completes.
+
+## Compact dashboard and calendar shortcuts
+
+The overview pairs compact leave balance cards with upcoming leave on the right
+on desktop. A second row pairs a clickable month calendar with request history;
+sections stack on mobile. Upcoming leave shows the next four approved entries,
+with a link to all requests when more exist. Clicking an upcoming entry or a
+calendar day opens the full team calendar at that date. The mini calendar marks
+only your approved leave and labels loading/unavailable marker states. Month
+navigation and a This month shortcut are available. Invalid date URLs fall back
+to today; browser history updates the selected full-calendar date.
+
+Calendar settings Save and Verify actions share a spaced, wrapping button group
+and stack with a visible gap on mobile. Verify is explicitly a non-submit button;
+it checks existing calendar access without saving the current form again.
+Desktop/mobile preview evidence verifies compact card heights, the right-hand
+upcoming panel, clickable dates and page width across the institution themes.

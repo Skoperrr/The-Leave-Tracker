@@ -11,6 +11,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "../App";
+import { today } from "../hooks/dates";
 import { connectGoogleCalendar } from "../pages/CalendarSettings";
 import { AuthProvider } from "../auth/AuthProvider";
 import { MonthCalendar } from "../components/MonthCalendar";
@@ -392,6 +393,107 @@ function mount(path: string) {
   return { ...ui, cache };
 }
 describe("Frontend integration flows", () => {
+  it("falls back to the current month for an invalid calendar date link", async () => {
+    mount("/calendar?date=2026-02-31");
+    expect(await screen.findByLabelText("Calendar month")).toHaveValue(
+      today().slice(0, 7),
+    );
+  });
+  it("opens the full calendar at the day clicked in the dashboard calendar", async () => {
+    mount("/");
+    const mini = await screen.findByRole("region", {
+      name: "Your leave calendar",
+    });
+    const dateLink = within(mini).getAllByRole("link")[0];
+    const date = new URL(
+      dateLink.getAttribute("href")!,
+      window.location.origin,
+    ).searchParams.get("date")!;
+    await userEvent.click(dateLink);
+    await screen.findByRole("heading", { name: "Team calendar" });
+    expect(screen.getByLabelText("Calendar month")).toHaveValue(
+      date.slice(0, 7),
+    );
+    await waitFor(() =>
+      expect(
+        document.querySelector(
+          '.calendar-day-button[aria-pressed="true"] time',
+        ),
+      ).toHaveAttribute("datetime", date),
+    );
+  });
+  it("opens upcoming leave at its start date", async () => {
+    requests = [{ ...createRequest("upcoming", dlab), status: "APPROVED" }];
+    mount("/");
+    const upcoming = await screen.findByRole("region", {
+      name: "Your upcoming leave",
+    });
+    const leave = await within(upcoming).findByRole("link", {
+      name: "Annual leave",
+    });
+    expect(leave).toHaveAttribute("href", "/calendar?date=2026-11-02");
+    await userEvent.click(leave);
+    await screen.findByText("Ayanda Example — On leave");
+    expect(
+      document.querySelector('.calendar-day-button[aria-pressed="true"] time'),
+    ).toHaveAttribute("datetime", "2026-11-02");
+  });
+  it("keeps one consistent centred loader from sign-in through delayed profile loading", async () => {
+    auth.session = null;
+    let finishLogin!: () => void;
+    let finishProfile!: () => void;
+    let profileStarted = false;
+    const profileGate = new Promise<void>((resolve) => {
+      finishProfile = resolve;
+    });
+    const fetcher = globalThis.fetch;
+    vi.stubGlobal("fetch", async (...args: Parameters<typeof fetch>) => {
+      if (String(args[0]).includes("/auth/profile")) {
+        profileStarted = true;
+        await profileGate;
+      }
+      return fetcher(...args);
+    });
+    auth.signIn.mockImplementation(async () => {
+      await new Promise<void>((resolve) => {
+        finishLogin = resolve;
+      });
+      auth.session = {
+        access_token: "test-access-token",
+        user: {
+          id: "auth-employee",
+          user_metadata: { full_name: "Ayanda Example" },
+        },
+      };
+      auth.listener?.("SIGNED_IN", auth.session);
+      return { data: { session: auth.session }, error: null };
+    });
+    mount("/sign-in");
+    await userEvent.type(
+      await screen.findByLabelText("Email address"),
+      "employee@example.test",
+    );
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await screen.findByRole("heading", { name: "Opening your workspace…" });
+    await act(async () => {
+      finishLogin();
+    });
+    await waitFor(() => expect(profileStarted).toBe(true));
+    expect(auth.signIn).toHaveBeenCalledOnce();
+    expect(
+      screen.getByRole("heading", { name: "Opening your workspace…" }),
+    ).toBeInTheDocument();
+    expect(document.querySelectorAll(".signin-loading")).toHaveLength(1);
+    expect(
+      document.querySelector(".loading .skeleton"),
+    ).not.toBeInTheDocument();
+    await act(async () => {
+      finishProfile();
+    });
+    await screen.findByRole("heading", { name: "Hello, Ayanda." });
+    expect(document.querySelector(".signin-loading")).not.toBeInTheDocument();
+  });
   it("shows and hides the sign-in password without submitting or changing its value", async () => {
     auth.session = null;
     mount("/sign-in");
@@ -429,7 +531,7 @@ describe("Frontend integration flows", () => {
     await userEvent.type(screen.getByLabelText("Password"), "password123");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(
-      await screen.findByRole("heading", { name: "Signing in…" }),
+      await screen.findByRole("heading", { name: "Opening your workspace…" }),
     ).toBeInTheDocument();
     expect(
       document.querySelector(".signin-loading-animation .domino-spinner"),
@@ -742,7 +844,7 @@ describe("Frontend integration flows", () => {
     });
     const user = userEvent.setup();
     mount("/");
-    await screen.findByText("15");
+    await screen.findByText("15", { selector: ".balance-number" });
     expect(document.querySelector(".app-shell")).toHaveAttribute(
       "data-theme",
       "dlab",
@@ -755,7 +857,7 @@ describe("Frontend integration flows", () => {
       screen.getByLabelText("YOUR ORGANISATION"),
       "org-field",
     );
-    await screen.findByText("12");
+    await screen.findByText("12", { selector: ".balance-number" });
     expect(document.querySelector(".app-shell")).toHaveAttribute(
       "data-theme",
       "field",
@@ -763,7 +865,9 @@ describe("Frontend integration flows", () => {
     expect(
       screen.getByRole("img", { name: "The Field Institute logo" }),
     ).toBeInTheDocument();
-    expect(screen.queryByText("15")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("15", { selector: ".balance-number" }),
+    ).not.toBeInTheDocument();
     expect(
       calls.some((call) =>
         call.path.startsWith("/balances?organisationId=org-field"),
@@ -1158,6 +1262,19 @@ describe("Email and calendar handoff", () => {
       "/integrations/google/settings?organisationId=org-dlab",
     );
     expect(calls.some((call) => call.path.includes("/internal/"))).toBe(false);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Verify calendar access" }),
+    );
+    await screen.findByText(
+      "Calendar access verified. No event or invitation was sent.",
+    );
+    expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(1);
+    expect(
+      calls.find(
+        (call) =>
+          call.path === "/integrations/google/test?organisationId=org-dlab",
+      )?.method,
+    ).toBe("POST");
   });
   it("shows accepted notifications without claiming delivery and retries the exact job", async () => {
     profile.memberships = [{ ...dlab, role: "ADMIN" }];

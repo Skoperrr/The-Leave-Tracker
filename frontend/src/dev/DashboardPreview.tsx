@@ -4,6 +4,7 @@ import { BalanceCards, UpcomingLeaveList } from "../components/DashboardCards";
 import { EmptyState, PageHeading } from "../components/ui";
 import { RequestCard } from "../components/RequestCard";
 import { CalendarWorkspace } from "../components/CalendarWorkspace";
+import { DashboardCalendar } from "../components/DashboardCalendar";
 import type { LeaveBalance, LeaveRequest, LeaveType } from "../types/api";
 
 // Visual fixtures only: this module is lazy-loaded behind import.meta.env.DEV.
@@ -156,7 +157,7 @@ export default function DashboardPreview({
         <strong>Sample data · Read-only preview</strong>
         <p>
           Explore the {calendar ? "calendar" : "dashboard"} layout and switch
-          between example organisations.
+          between example organisations.{" "}
           {calendar
             ? "Calendar entries are illustrative."
             : "Balances and requests here are illustrative."}
@@ -227,45 +228,55 @@ export default function DashboardPreview({
           >
             Here's your leave at {org.name}.
           </PageHeading>
-          <section aria-labelledby="balance-heading">
-            <div className="section-heading">
-              <h2 id="balance-heading">Leave balances</h2>
-              <span className="caption">2026 · Sample balances</span>
+          <div className="dashboard-summary">
+            <section
+              className="dashboard-balances"
+              aria-labelledby="balance-heading"
+            >
+              <div className="section-heading">
+                <h2 id="balance-heading">Leave balances</h2>
+                <span className="caption">2026 · Sample balances</span>
+              </div>
+              <BalanceCards balances={balances} leaveTypes={types} />
+              <p className="caption">
+                Example allocations: pending requests reserve days.
+              </p>
+            </section>
+            <div className="dashboard-side">
+              <section
+                className="upcoming panel"
+                aria-labelledby="upcoming-heading"
+              >
+                <div className="section-heading">
+                  <h2 id="upcoming-heading">Your upcoming leave</h2>
+                  <span className="caption">Approved · Sample data</span>
+                </div>
+                {upcoming.length ? (
+                  <UpcomingLeaveList requests={upcoming} preview />
+                ) : (
+                  <EmptyState title="Nothing on the horizon yet">
+                    Approved time away appears here.
+                  </EmptyState>
+                )}
+              </section>
             </div>
-            <BalanceCards balances={balances} leaveTypes={types} />
-            <p className="caption">
-              Example allocations: pending requests reserve days.
-            </p>
-          </section>
-          <section
-            className="upcoming panel"
-            aria-labelledby="upcoming-heading"
-          >
-            <div className="section-heading">
-              <h2 id="upcoming-heading">Your upcoming leave</h2>
-              <span className="caption">Approved · Sample data</span>
-            </div>
-            {upcoming.length ? (
-              <UpcomingLeaveList requests={upcoming} />
-            ) : (
-              <EmptyState title="Nothing on the horizon yet">
-                Approved time away appears here.
-              </EmptyState>
-            )}
-          </section>
-          <section id="preview-requests" aria-labelledby="recent-heading">
-            <div className="section-heading">
-              <h2 id="recent-heading">Your requests</h2>
-              <span className="caption">
-                Each organisation decides independently
-              </span>
-            </div>
-            <div className="request-list">
-              {requests.map((request) => (
-                <RequestCard key={request.id} request={request} />
-              ))}
-            </div>
-          </section>
+          </div>
+          <div className="dashboard-details">
+            <DashboardCalendar requests={requests} preview />
+            <section id="preview-requests" aria-labelledby="recent-heading">
+              <div className="section-heading">
+                <h2 id="recent-heading">Your requests</h2>
+                <span className="caption">
+                  Each organisation decides independently
+                </span>
+              </div>
+              <div className="request-list">
+                {requests.map((request) => (
+                  <RequestCard key={request.id} request={request} />
+                ))}
+              </div>
+            </section>
+          </div>
         </>
       )}
     </WorkspaceShell>
