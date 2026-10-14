@@ -229,14 +229,16 @@ export default function DashboardPreview({
             Here's your leave at {org.name}.
           </PageHeading>
           <div className="dashboard-summary">
-            <section
-              className="dashboard-balances"
-              aria-labelledby="balance-heading"
-            >
+            <div className="dashboard-summary-heading">
               <div className="section-heading">
                 <h2 id="balance-heading">Leave balances</h2>
                 <span className="caption">2026 · Sample balances</span>
               </div>
+            </div>
+            <section
+              className="dashboard-balances"
+              aria-labelledby="balance-heading"
+            >
               <BalanceCards balances={balances} leaveTypes={types} />
               <p className="caption">
                 Example allocations: pending requests reserve days.

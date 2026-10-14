@@ -46,10 +46,7 @@ export function Dashboard() {
         Here's your leave at {membership.organisationName}.
       </PageHeading>
       <div className="dashboard-summary">
-        <section
-          className="dashboard-balances"
-          aria-labelledby="balance-heading"
-        >
+        <div className="dashboard-summary-heading">
           <div className="section-heading">
             <h2 id="balance-heading">Leave balances</h2>
             <label className="inline-label" htmlFor="balance-year">
@@ -67,6 +64,11 @@ export function Dashboard() {
               />
             </label>
           </div>
+        </div>
+        <section
+          className="dashboard-balances"
+          aria-labelledby="balance-heading"
+        >
           {balances.isPending || types.isPending ? (
             <Loading label="Loading balances" />
           ) : balances.isError || types.isError ? (

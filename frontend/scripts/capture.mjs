@@ -179,14 +179,15 @@ try {
         throw new Error("Mobile navigation did not render correctly.");
       if (!calendar) {
         const layout = await send("Runtime.evaluate", {
-          expression: `(() => { const balance = document.querySelector('.dashboard-balances').getBoundingClientRect(); const upcoming = document.querySelector('.dashboard-side .upcoming').getBoundingClientRect(); return { calendarDays: document.querySelectorAll('.mini-day').length, upcomingOnRight: upcoming.left >= balance.right, compactBalances: document.querySelector('.balance-card').getBoundingClientRect().height < 260 }; })()`,
+          expression: `(() => { const balance = document.querySelector('.dashboard-balances').getBoundingClientRect(); const upcoming = document.querySelector('.dashboard-side .upcoming').getBoundingClientRect(); return { calendarDays: document.querySelectorAll('.mini-day').length, upcomingOnRight: upcoming.left >= balance.right, cardTopsAligned: Math.abs(document.querySelector('.balance-card').getBoundingClientRect().top - upcoming.top) < 2, compactBalances: document.querySelector('.balance-card').getBoundingClientRect().height < 260 }; })()`,
           returnByValue: true,
         });
         Object.assign(dimensions, layout.result.value);
         if (
           dimensions.calendarDays < 28 ||
           !dimensions.compactBalances ||
-          (!view.mobile && !dimensions.upcomingOnRight)
+          (!view.mobile &&
+            (!dimensions.upcomingOnRight || !dimensions.cardTopsAligned))
         )
           throw new Error("Dashboard layout verification failed.");
       }
