@@ -2,6 +2,9 @@ import type { LeaveRepository } from '../repositories/leave.js';
 import { activeMemberships, lockMembershipIds } from '../repositories/leave.js';
 import { ApiError } from '../utils/api-error.js';
 import { membershipSchema } from '../types/me.js';
+import { z } from 'zod';
+
+const adminMembershipSchema = membershipSchema.extend({ employeeDisplayName: z.string() });
 
 export function createAdminService(repository: LeaveRepository) {
   return {
@@ -25,7 +28,7 @@ export function createAdminService(repository: LeaveRepository) {
           role: 'EMPLOYEE', managerMembershipId: input.managerMembershipId ?? null }, include: { organisation: true } });
         await tx.auditLog.create({ data: { actorUserId: actorId, organisationId: member.organisationId,
           action: 'MEMBERSHIP_CREATED', entityType: 'Membership', entityId: member.id, metadata: { role: 'EMPLOYEE' } } });
-        return membershipSchema.parse({ ...member, organisationName: member.organisation.name });
+        return adminMembershipSchema.parse({ ...member, organisationName: member.organisation.name, employeeDisplayName: user.fullName });
       });
     },
     allocate(actorId: string, input: { organisationId: string; membershipId: string; leaveTypeId: string; year: number; allocatedDays: number }) {
@@ -55,10 +58,11 @@ export function createAdminService(repository: LeaveRepository) {
         const memberships = await transaction.membership.findMany({
           where: { organisationId }, orderBy: { id: 'asc' },
           select: { id: true, organisationId: true, role: true, managerMembershipId: true, active: true,
+            user: { select: { fullName: true } },
             organisation: { select: { name: true } } },
         });
-        return memberships.map(({ organisation, ...membership }) => membershipSchema.parse({
-          ...membership, organisationName: organisation.name,
+        return memberships.map(({ organisation, user, ...membership }) => adminMembershipSchema.parse({
+          ...membership, organisationName: organisation.name, employeeDisplayName: user.fullName,
         }));
       });
     },

@@ -21,7 +21,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-Open http://localhost:5173. `VITE_API_URL` defaults to `http://localhost:3001`; it is the server origin, without `/api/v1`. The API client appends the prefix exactly once. Use only the Supabase project URL and public anon key; never put a service role key or database credential in a Vite environment variable. `.env` files are ignored locally. The backend must allow the Vite origin in CORS and verify Supabase Bearer tokens from the same project. Accounts, profiles, memberships, leave types and allocations must already be provisioned by the backend; this app does not fabricate them or offer registration.
+Open http://localhost:5173. `VITE_API_URL` defaults to `http://localhost:3001`; it is the server origin, without `/api/v1`. The API client appends the prefix exactly once. Use only the Supabase project URL and public anon key; never put a service role key or database credential in a Vite environment variable. `.env` files are ignored locally. The backend must allow the Vite origin in CORS and verify Supabase Bearer tokens from the same project. Email signup is available. New accounts wait for an administrator to assign organisation access and explicit leave allocations; the frontend never grants itself access.
 
 ## Troubleshooting workspace access
 
@@ -29,7 +29,7 @@ Supabase sign-in and the leave API are separate services. After sign-in, Kopano 
 
 If you see "We cannot reach the leave server", check that the backend is running and that `VITE_API_URL` contains its origin, without `/api/v1`. Restart Vite after changing `.env`. Test the public health endpoint at `http://localhost:3001/api/v1/health`; a successful health response confirms the server is reachable, but does not confirm that `/me` or leave endpoints are implemented.
 
-The backend implements `/me`, organisations and leave types. A missing application profile returns 404; an inactive profile returns 403. Provision real profiles and memberships or use the documented Auth-backed demo accounts. Balances, requests and calendar endpoints remain pending, so their live pages show API errors until those workflows are implemented. See [API implementation status](../docs/API_IMPLEMENTATION.md) and [backend setup](../docs/BACKEND_SETUP.md).
+The backend implements `/me`, organisations and leave types. A missing application profile returns 404; an inactive profile returns 403. Provision real profiles and memberships or use the documented Auth-backed demo accounts. Balances, requests and internal calendar endpoints are implemented. See [API implementation status](../docs/API_IMPLEMENTATION.md) and [backend setup](../docs/BACKEND_SETUP.md).
 
 Use `http://localhost:5173` for the frontend: the documented backend CORS default permits that exact origin. `http://127.0.0.1:5173` is a different origin and must also be allowed in the backend's `FRONTEND_ORIGINS` if used. A browser CORS failure can produce the same network-error message even when the backend is running.
 
@@ -72,7 +72,7 @@ Tests use isolated auth and HTTP fixtures only in `src/test`; real application f
 
 ## Known limitations
 
-Admin editing is deferred: the shared contract does not define an allocation-list endpoint, allocation response shape, or complete membership-update payload. The membership list renders only documented Membership fields and has no invented employee names. No public-holiday exclusions, half days, external calendars, email, or employee overlap warnings are implemented. Upcoming approved leave consumes all documented pages; the dashboard request preview shows the API's first page without claiming an undocumented sort order. A production static host must rewrite browser routes to `index.html`. Authenticated-flow screenshots and live backend demo evidence remain pending until real credentials and the backend are available.
+Admin creation of employee memberships and initial allocations is implemented through the email/calendar handoff. Editing existing memberships and allocations remains deferred. The membership list uses stored profile names supplied by the organisation-scoped admin API. Public-holiday exclusions, half days and employee overlap warnings are not implemented. External calendar administration and email auth are described below. Upcoming approved leave consumes all documented pages; the dashboard request preview shows the API's first page without claiming an undocumented sort order. A production static host must rewrite browser routes to `index.html`. Authenticated-flow screenshots and live backend demo evidence remain pending until real credentials and the backend are available.
 
 Implementation follows [the frontend specification](../docs/KOPANO_FRONTEND_SPECIFICATION.md) and [the binding shared API contract](../docs/SHARED_API_CONTRACT.md). Authentication and cache handling follow the [Supabase auth lifecycle documentation](https://supabase.com/docs/reference/javascript/auth-onauthstatechange) and [TanStack Query invalidation documentation](https://tanstack.com/query/latest/docs/framework/react/guides/query-invalidation).
 
@@ -100,8 +100,9 @@ The frontend implements the additions in
   can complete their profile. Existing profiles are preserved by the API. Accounts
   without active memberships see the organisation-access waiting state.
 - `/admin` assigns EMPLOYEE membership by exact email and creates explicit
-  allocations. Manager/member choices show membership IDs because the API does
-  not expose a general directory or member display names. Existing allocations
+  allocations. Manager/member choices and membership cards show `ROLE-Full-Name-ORG` labels
+  from the organisation-scoped admin response. Organisation codes are DLB, SSG
+  and TFI; API requests continue to use UUIDs. Existing allocations
   and memberships cannot be edited/reactivated through these creation forms.
 - `/admin/calendar` handles Google consent in the same tab with the browser nonce
   cookie, paginated writable calendars, explicit invitation opt-in, a read-only
@@ -118,3 +119,32 @@ Automated UI/API fixture tests cover payloads, profile gating, role restrictions
 calendar pagination, cookie-backed consent, invitation defaults, retries and
 status wording. Provider consent, SMTP delivery, live migrations and Google event
 or invitation delivery require configured integration verification.
+
+## Password recovery and approval filters
+
+`/forgot-password` sends a Supabase reset email with neutral account feedback.
+The link returns to `/reset-password`, which accepts the SDK's
+`PASSWORD_RECOVERY` event, validates matching passwords (at least eight
+characters), and updates the password directly through Supabase. Recovery
+sessions are routed to the reset screen before any workspace/profile query.
+After saving, the frontend closes the local session and asks the user to sign in
+again. Missing/expired links show a new-link action; if the reset page is
+reloaded before completion, request a fresh link. Provider policy still controls
+which passwords are accepted.
+
+In Supabase **Authentication → URL Configuration → Redirect URLs**, allow:
+
+- `https://the-leave-tracker-skfc.vercel.app/reset-password`
+- `http://localhost:5173/reset-password` for local development
+- `http://127.0.0.1:5173/reset-password` if using that Vite origin
+
+Configure confirmation/recovery email delivery separately in Supabase. The flow
+follows [Supabase password recovery](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail).
+Automated fixtures verify recovery payloads, matching passwords, recovery
+gating, safe failures and sign-out; they do not verify real email delivery.
+
+Approvals offer Pending, Approved, Declined and Cancelled filters, always
+sending an explicit status and resetting pagination when it changes. The
+misleading “All statuses” option was removed because omitting status makes the
+existing backend return only Pending. Employee request history retains its
+working “All statuses” filter.

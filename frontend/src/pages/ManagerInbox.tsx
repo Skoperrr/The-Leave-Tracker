@@ -17,7 +17,7 @@ export function ManagerInbox() {
   const { membership, me } = useOrganisation();
   const org = membership.organisationId;
   const isAdmin = membership.role === "ADMIN";
-  const [status, setStatus] = useState<LeaveStatus | "">("PENDING");
+  const [status, setStatus] = useState<LeaveStatus>("PENDING");
   const [page, setPage] = useState(1);
   const requests = useApiQuery(
     ["manager-requests", org, status, page],
@@ -25,7 +25,7 @@ export function ManagerInbox() {
       api.managerRequests(
         {
           organisationId: org,
-          status: status || undefined,
+          status,
           page,
           pageSize: 20,
         },
@@ -53,11 +53,10 @@ export function ManagerInbox() {
             id="inbox-status"
             value={status}
             onChange={(event) => {
-              setStatus(event.target.value as LeaveStatus | "");
+              setStatus(event.target.value as LeaveStatus);
               setPage(1);
             }}
           >
-            <option value="">All statuses</option>
             {(["PENDING", "APPROVED", "DECLINED", "CANCELLED"] as const).map(
               (value) => (
                 <option key={value} value={value}>

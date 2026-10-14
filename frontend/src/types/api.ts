@@ -3,6 +3,7 @@ export type LeaveStatus = "PENDING" | "APPROVED" | "DECLINED" | "CANCELLED";
 export type Organization = { id: string; name: string; slug: string };
 export type Membership = {
   id: string;
+  employeeDisplayName?: string;
   organisationId: string;
   organisationName: string;
   role: Role;

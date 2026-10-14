@@ -14,6 +14,7 @@ type AuthState = {
   loading: boolean;
   expired: boolean;
   authError: string | null;
+  recovering: boolean;
 };
 const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -23,13 +24,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: Boolean(supabase),
     expired: false,
     authError: null,
+    recovering: false,
   });
   const userId = useRef<string | null>(null);
   useEffect(() => {
     if (!supabase) return;
     let mounted = true;
     let eventReceived = false;
-    const applySession = (session: Session | null) => {
+    const applySession = (session: Session | null, recovery = false) => {
       if (!mounted) return;
       if (userId.current !== (session?.user.id ?? null)) cache.clear();
       userId.current = session?.user.id ?? null;
@@ -38,13 +40,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading: false,
         expired: session ? false : previous.expired,
         authError: null,
+        recovering:
+          Boolean(session) &&
+          (recovery ||
+            (previous.recovering &&
+              previous.session?.user.id === session?.user.id)),
       }));
     };
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       eventReceived = true;
-      applySession(session);
+      applySession(session, event === "PASSWORD_RECOVERY");
     });
     void supabase.auth
       .getSession()
@@ -56,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             loading: false,
             expired: false,
             authError: error.message,
+            recovering: false,
           });
         else applySession(data.session);
       })
@@ -66,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             loading: false,
             expired: false,
             authError: "Unable to restore your session. Please sign in.",
+            recovering: false,
           });
       });
     const expire = () => {
@@ -76,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading: false,
         expired: true,
         authError: null,
+        recovering: false,
       });
       void supabase!.auth.signOut({ scope: "local" });
     };

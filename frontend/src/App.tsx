@@ -9,6 +9,7 @@ import { Link, Route, Routes } from "react-router-dom";
 import { RequireAuth, RequireRole } from "./auth/Guards";
 import { AppLayout } from "./layouts/AppLayout";
 import { SignUp } from "./pages/SignUp";
+import { ForgotPassword, ResetPassword } from "./pages/PasswordRecovery";
 import { CalendarSettings } from "./pages/CalendarSettings";
 import { SignIn } from "./pages/SignIn";
 import { Dashboard } from "./pages/Dashboard";
@@ -70,6 +71,8 @@ export function App() {
       )}
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/sign-up" element={<SignUp />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
           <Route index element={<Dashboard />} />

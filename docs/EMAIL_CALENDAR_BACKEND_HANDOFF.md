@@ -95,3 +95,17 @@ Disconnect clears local credentials and stops future work. An already-running ex
 `npm run calendar:sync` processes up to five jobs in a separate backend process. `GET /api/v1/internal/google-calendar-sync` processes at most one job and requires `Authorization: Bearer <CRON_SECRET>`; employee/admin Supabase tokens cannot authorise it. It is a second documented auth exception for the trusted scheduler. Per-call limits keep work bounded; additional invocations drain the queue. Do not poll it from frontend code or place CRON_SECRET in VITE variables.
 
 The GitHub Actions workflow is prepared for Vercel Hobby. Schedules are disabled until repository variable CALENDAR_SYNC_ENABLED is true. Setup, provider consent and deployment instructions: [CALENDAR_EMAIL_SETUP.md](CALENDAR_EMAIL_SETUP.md).
+
+## Admin membership display names
+
+GET and POST `/api/v1/admin/memberships` return `AdminMembership`: the existing
+Membership fields plus required `employeeDisplayName` from the stored profile.
+GET retains exact ADMIN organisation scoping and includes inactive memberships.
+No emails, Auth user IDs or nested user records are added. `/me` is unchanged.
+
+The frontend displays `ROLE-Full-Name-ORG` for memberships and resolves manager
+labels against that same organisation's list. D-Lab uses DLB, StrideShift Global
+uses SSG and The Field Institute (also Field Institute) uses TFI. Full names
+retain all components, with whitespace replaced by hyphens. These labels are
+not unique keys; underlying UUIDs remain in form values and API payloads. Older
+responses without names retain an ID fallback rather than guessed identities.

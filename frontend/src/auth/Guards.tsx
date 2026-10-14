@@ -8,7 +8,7 @@ import { ErrorNotice, Loading, SignOutButton } from "../components/ui";
 import { ApiClientError } from "../api/errors";
 import type { Role } from "../types/api";
 export function RequireAuth() {
-  const { session, loading } = useAuth();
+  const { session, loading, recovering } = useAuth();
   const location = useLocation();
   const me = useQuery({
     queryKey: ["me", session?.user.id],
@@ -23,9 +23,10 @@ export function RequireAuth() {
       const existing = await api.me(signal);
       return api.profile(existing.data.fullName, signal);
     },
-    enabled: Boolean(session),
+    enabled: Boolean(session) && !recovering,
   });
   if (loading) return <Loading />;
+  if (recovering) return <Navigate to="/reset-password" replace />;
   if (!session)
     return (
       <Navigate to="/sign-in" state={{ from: location.pathname }} replace />

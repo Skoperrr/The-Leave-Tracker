@@ -9,7 +9,7 @@ const organisationId = '10000000-0000-4000-8000-000000000001';
 function setup(role: string | null) {
   const findMany = vi.fn().mockResolvedValueOnce(role ? [{ role }] : []).mockResolvedValueOnce([
     { id: 'membership', organisationId, role: 'EMPLOYEE', active: false, managerMembershipId: null,
-      organisation: { name: 'D-Lab' }, userId: 'private-user-id' },
+      organisation: { name: 'D-Lab' }, user: { fullName: 'Ayanda Demo', email: 'private@example.invalid' }, userId: 'private-user-id' },
   ]);
   const transaction = { membership: { findMany } } as unknown as LeaveTransaction;
   const repository = { read: (operation: (tx: LeaveTransaction) => unknown) => operation(transaction) } as LeaveRepository;
@@ -30,14 +30,15 @@ describe('organisation admin memberships', () => {
     expect(findMany.mock.calls[0]![0].where).toMatchObject({ userId: 'actor', active: true,
       organisationId: { in: [organisationId] }, user: { active: true }, organisation: { active: true } });
   });
-  it('lists only the admin organisation, includes inactive records, and strips identity fields', async () => {
+  it('lists scoped member names including inactive records without exposing private identity fields', async () => {
     const { app, findMany } = setup('ADMIN');
     const response = await request(app).get(`/api/v1/admin/memberships?organisationId=${organisationId}`)
       .set('Authorization', 'Bearer token');
     expect(response.status).toBe(200);
     expect(findMany.mock.calls[1]![0].where).toEqual({ organisationId });
     expect(response.body).toEqual({ data: [{ id: 'membership', organisationId, organisationName: 'D-Lab',
-      role: 'EMPLOYEE', active: false, managerMembershipId: null }] });
+      role: 'EMPLOYEE', active: false, managerMembershipId: null, employeeDisplayName: 'Ayanda Demo' }] });
+    expect(findMany.mock.calls[1]![0].select.user).toEqual({ select: { fullName: true } });
   });
   it.each(['', '?organisationId=bad', `?organisationId=${organisationId}&role=ADMIN`])('rejects invalid or extra parameters %s', async query => {
     const { app, findMany } = setup('ADMIN');

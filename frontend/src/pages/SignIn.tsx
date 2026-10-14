@@ -7,7 +7,7 @@ import { supabase } from "../auth/supabase";
 import { signInSchema, type SignInValues } from "../hooks/validation";
 import { ErrorNotice, FieldError, Loading } from "../components/ui";
 export function SignIn() {
-  const { session, loading, expired, authError } = useAuth();
+  const { session, loading, expired, authError, recovering } = useAuth();
   const location = useLocation();
   const [error, setError] = useState<unknown>(null);
   const {
@@ -16,6 +16,7 @@ export function SignIn() {
     formState: { errors, isSubmitting },
   } = useForm<SignInValues>({ resolver: zodResolver(signInSchema) });
   if (loading) return <Loading label="Restoring your session" />;
+  if (recovering) return <Navigate to="/reset-password" replace />;
   if (session) {
     const from = (location.state as { from?: string } | null)?.from;
     return (
@@ -120,6 +121,9 @@ export function SignIn() {
               {isSubmitting ? "Signing in…" : "Sign in"}
             </button>
           </form>
+          <p className="signin-help">
+            <Link to="/forgot-password">Forgot password?</Link>
+          </p>
           <p className="signin-help">
             Need an account? <Link to="/sign-up">Create an account</Link>.
             Contact your administrator for organisation access.

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { api } from "../api/endpoints";
 import { useOrganisation } from "../auth/OrganizationProvider";
 import { useApiQuery, useRefreshLeave } from "../hooks/queries";
+import { membershipLabel } from "../hooks/membership-label";
 import type { Membership } from "../types/api";
 import { ErrorNotice, FieldError } from "./ui";
 const assignmentSchema = z.object({
@@ -25,7 +26,15 @@ const allocationSchema = z.object({
     ),
 });
 export function AdminAssignment({ members }: { members: Membership[] }) {
-  const { membership } = useOrganisation();
+  const { membership, me } = useOrganisation();
+  const label = (member: Membership) =>
+    membershipLabel(
+      member,
+      member.employeeDisplayName ??
+        (me.memberships.some((own) => own.id === member.id)
+          ? me.fullName
+          : undefined),
+    );
   const org = membership.organisationId;
   const refresh = useRefreshLeave();
   const types = useApiQuery(["leave-types", org], (signal) =>
@@ -103,7 +112,7 @@ export function AdminAssignment({ members }: { members: Membership[] }) {
                 )
                 .map((member) => (
                   <option key={member.id} value={member.id}>
-                    {member.role.toLowerCase()} · {member.id}
+                    {label(member)}
                   </option>
                 ))}
             </select>
@@ -140,7 +149,7 @@ export function AdminAssignment({ members }: { members: Membership[] }) {
               <option value="">Choose a member</option>
               {active.map((member) => (
                 <option key={member.id} value={member.id}>
-                  {member.role.toLowerCase()} · {member.id}
+                  {label(member)}
                 </option>
               ))}
             </select>

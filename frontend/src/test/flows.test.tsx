@@ -1,5 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -25,6 +26,8 @@ const auth = vi.hoisted(() => ({
   listener: null as ((event: string, session: unknown) => void) | null,
   signIn: vi.fn(),
   signUp: vi.fn(),
+  resetPassword: vi.fn(),
+  updateUser: vi.fn(),
 }));
 vi.mock("../auth/supabase", () => ({
   supabase: {
@@ -49,6 +52,8 @@ vi.mock("../auth/supabase", () => ({
       },
       signInWithPassword: auth.signIn,
       signUp: auth.signUp,
+      resetPasswordForEmail: auth.resetPassword,
+      updateUser: auth.updateUser,
       signOut: async () => {
         auth.session = null;
         auth.listener?.("SIGNED_OUT", null);
@@ -121,6 +126,8 @@ beforeEach(() => {
   auth.signIn.mockReset();
   auth.signUp.mockReset();
   auth.signUp.mockResolvedValue({ data: { session: null }, error: null });
+  auth.resetPassword.mockReset().mockResolvedValue({ error: null });
+  auth.updateUser.mockReset().mockResolvedValue({ error: null });
   profileWrites = [];
   assignedMembers = [];
   google = {
@@ -385,6 +392,27 @@ function mount(path: string) {
   return { ...ui, cache };
 }
 describe("Frontend integration flows", () => {
+  it("uses explicit approval status filters and resets pagination", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    requests = [{ ...createRequest("approved", dlab), status: "APPROVED" }];
+    mount("/admin/approvals");
+    await screen.findByText("You're all caught up");
+    expect(
+      screen.queryByRole("option", { name: "All statuses" }),
+    ).not.toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText("Status"), "APPROVED");
+    await screen.findByText("Approved", { selector: ".status" });
+    expect(
+      calls
+        .filter((call) => call.path.startsWith("/manager/leave-requests?"))
+        .every((call) =>
+          new URLSearchParams(call.path.split("?")[1]).has("status"),
+        ),
+    ).toBe(true);
+    expect(
+      calls.some((call) => call.path.includes("status=APPROVED&page=1")),
+    ).toBe(true);
+  });
   it("submits exactly one cross-organisation payload and displays individual statuses", async () => {
     const user = userEvent.setup();
     mount("/requests/new");
@@ -669,6 +697,172 @@ describe("Shared calendar privacy and inclusive boundaries", () => {
 });
 
 describe("Email and calendar handoff", () => {
+  it("shows readable member and manager labels while submitting UUID relationships", async () => {
+    const manager = {
+      ...dlab,
+      employeeDisplayName: "Thabo Demo",
+      role: "ADMIN" as const,
+    };
+    profile.memberships = [manager];
+    assignedMembers = [
+      {
+        ...dlab,
+        id: "ayanda-member",
+        role: "EMPLOYEE",
+        employeeDisplayName: "Ayanda Demo",
+        managerMembershipId: manager.id,
+      },
+    ];
+    mount("/admin");
+    await screen.findByRole("option", { name: "EMPLOYEE-Ayanda-Demo-DLB" });
+    const employee = screen
+      .getAllByRole("article")
+      .find((card) => within(card).queryByText("EMPLOYEE-Ayanda-Demo-DLB"))!;
+    expect(
+      within(employee).getByText("ADMIN-Thabo-Demo-DLB"),
+    ).toBeInTheDocument();
+    await userEvent.type(
+      screen.getByLabelText("Account email"),
+      "new@example.com",
+    );
+    await userEvent.selectOptions(
+      screen.getByLabelText("Manager (optional)"),
+      manager.id,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Assign employee access" }),
+    );
+    await screen.findByText(/Employee access assigned/);
+    expect(
+      calls.find(
+        (call) => call.path === "/admin/memberships" && call.method === "POST",
+      )?.body,
+    ).toEqual({
+      organisationId: "org-dlab",
+      email: "new@example.com",
+      managerMembershipId: manager.id,
+    });
+  });
+  it("requests a reset email with a fixed same-origin redirect and no application API call", async () => {
+    auth.session = null;
+    mount("/forgot-password");
+    await userEvent.type(
+      screen.getByLabelText("Email address"),
+      "person@example.com",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Send reset link" }),
+    );
+    await screen.findByRole("heading", { name: "Check your email" });
+    expect(auth.resetPassword).toHaveBeenCalledWith("person@example.com", {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    expect(calls).toEqual([]);
+  });
+  it("keeps recovery request feedback neutral when an account is missing", async () => {
+    auth.resetPassword.mockResolvedValue({
+      error: { code: "user_not_found", message: "Private account information" },
+    });
+    mount("/forgot-password");
+    await userEvent.type(
+      screen.getByLabelText("Email address"),
+      "missing@example.com",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Send reset link" }),
+    );
+    await screen.findByRole("heading", { name: "Check your email" });
+    expect(
+      screen.queryByText("Private account information"),
+    ).not.toBeInTheDocument();
+  });
+  it("blocks password updates without a recovery event, even for a signed-in account", async () => {
+    mount("/reset-password");
+    await screen.findByText(/This reset link is missing or has expired/);
+    expect(
+      screen.queryByRole("button", { name: "Update password" }),
+    ).not.toBeInTheDocument();
+    expect(auth.updateUser).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+  });
+  it("validates matching passwords, updates through Supabase, and ends the recovery session", async () => {
+    auth.session = null;
+    mount("/reset-password");
+    await screen.findByText(/This reset link is missing or has expired/);
+    await act(async () => {
+      auth.session = {
+        access_token: "test-access-token",
+        user: { id: "auth-employee" },
+      };
+      auth.listener?.("PASSWORD_RECOVERY", auth.session);
+    });
+    await userEvent.type(
+      screen.getByLabelText("New password", { exact: true }),
+      "NewPassword123!",
+    );
+    await userEvent.type(
+      screen.getByLabelText("Confirm new password"),
+      "DifferentPassword!",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Update password" }),
+    );
+    await screen.findByText("Passwords must match.");
+    expect(auth.updateUser).not.toHaveBeenCalled();
+    await userEvent.clear(screen.getByLabelText("Confirm new password"));
+    await userEvent.type(
+      screen.getByLabelText("Confirm new password"),
+      "NewPassword123!",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Update password" }),
+    );
+    await screen.findByRole("heading", { name: "Password updated" });
+    expect(auth.updateUser).toHaveBeenCalledWith({
+      password: "NewPassword123!",
+    });
+    expect(auth.session).toBeNull();
+    expect(calls).toEqual([]);
+  });
+  it("routes recovery sessions away from the workspace without loading private data", async () => {
+    auth.session = null;
+    mount("/");
+    await screen.findByRole("heading", { name: "Sign in to your workspace" });
+    await act(async () => {
+      auth.session = {
+        access_token: "test-access-token",
+        user: { id: "auth-employee" },
+      };
+      auth.listener?.("PASSWORD_RECOVERY", auth.session);
+    });
+    await screen.findByRole("heading", { name: "Reset your password" });
+    expect(calls).toEqual([]);
+    expect(profileWrites).toEqual([]);
+  });
+  it("shows a safe retry message for a failed password update", async () => {
+    auth.updateUser.mockResolvedValue({
+      error: new Error("PRIVATE_PROVIDER_DATA"),
+    });
+    mount("/reset-password");
+    await screen.findByText(/This reset link is missing or has expired/);
+    await act(async () => {
+      auth.listener?.("PASSWORD_RECOVERY", auth.session);
+    });
+    await userEvent.type(
+      screen.getByLabelText("New password", { exact: true }),
+      "NewPassword123!",
+    );
+    await userEvent.type(
+      screen.getByLabelText("Confirm new password"),
+      "NewPassword123!",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Update password" }),
+    );
+    await screen.findByText(/Unable to complete the password reset/);
+    expect(screen.queryByText("PRIVATE_PROVIDER_DATA")).not.toBeInTheDocument();
+    expect(auth.session).not.toBeNull();
+  });
   it("shows neutral email confirmation and sends signup only to Supabase", async () => {
     auth.session = null;
     mount("/sign-up");
