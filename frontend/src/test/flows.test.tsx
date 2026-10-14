@@ -581,6 +581,11 @@ describe("Frontend integration flows", () => {
     const user = userEvent.setup();
     mount("/");
     await screen.findByText("15");
+    expect(document.querySelector(".app-shell")).toHaveAttribute(
+      "data-theme",
+      "dlab",
+    );
+    expect(screen.getByRole("img", { name: "D-Lab logo" })).toBeInTheDocument();
     expect(
       screen.queryByRole("option", { name: "Hidden org" }),
     ).not.toBeInTheDocument();
@@ -589,6 +594,13 @@ describe("Frontend integration flows", () => {
       "org-field",
     );
     await screen.findByText("12");
+    expect(document.querySelector(".app-shell")).toHaveAttribute(
+      "data-theme",
+      "field",
+    );
+    expect(
+      screen.getByRole("img", { name: "The Field Institute logo" }),
+    ).toBeInTheDocument();
     expect(screen.queryByText("15")).not.toBeInTheDocument();
     expect(
       calls.some((call) =>

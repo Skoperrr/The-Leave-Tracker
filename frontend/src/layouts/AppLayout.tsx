@@ -2,28 +2,36 @@ import { useEffect, useRef } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useOrganisation } from "../auth/OrganizationProvider";
 import { SignOutButton } from "../components/ui";
+import { Brand } from "../components/Brand";
+import { NavIcon } from "../components/NavIcon";
+import { OrganisationBrand } from "../components/OrganisationBrand";
+import { getOrganisationTheme } from "../theme/organisations";
 export function AppLayout() {
   const { me, memberships, membership, selectOrganisation } = useOrganisation();
   const location = useLocation();
   const main = useRef<HTMLElement>(null);
+  const theme = getOrganisationTheme(membership.organisationName);
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    meta?.setAttribute("content", theme.colour);
+    return () => {
+      meta?.setAttribute("content", "#123d36");
+    };
+  }, [theme.colour]);
   useEffect(() => {
     main.current?.focus();
   }, [location.pathname]);
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={theme.key}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
       <aside className="sidebar">
         <NavLink to="/" className="brand" aria-label="The Leave Tracker home">
-          <span className="brand-symbol" aria-hidden="true">
-            LT
-          </span>
-          <span>
-            The Leave Tracker<small>LEAVE, TOGETHER</small>
-          </span>
+          <Brand />
         </NavLink>
         <div className="org-control">
+          <OrganisationBrand name={membership.organisationName} />
           <label htmlFor="organisation">YOUR ORGANISATION</label>
           <select
             id="organisation"
@@ -40,21 +48,39 @@ export function AppLayout() {
         </div>
         <nav className="main-nav" aria-label="Main navigation">
           <NavLink to="/" end>
+            <NavIcon name="overview" />
             Overview
           </NavLink>
-          <NavLink to="/requests/new">Request leave</NavLink>
+          <NavLink to="/requests/new">
+            <NavIcon name="request" />
+            Request leave
+          </NavLink>
           <NavLink to="/requests" end>
+            <NavIcon name="history" />
             My requests
           </NavLink>
-          <NavLink to="/calendar">Team calendar</NavLink>
+          <NavLink to="/calendar">
+            <NavIcon name="calendar" />
+            Team calendar
+          </NavLink>
           {membership.role === "MANAGER" && (
-            <NavLink to="/manager">Manager inbox</NavLink>
+            <NavLink to="/manager">
+              <NavIcon name="approval" />
+              Manager inbox
+            </NavLink>
           )}
           {membership.role === "ADMIN" && (
             <>
-              <NavLink to="/admin/approvals">Leave approvals</NavLink>
-              <NavLink to="/admin/calendar">Calendar settings</NavLink>
+              <NavLink to="/admin/approvals">
+                <NavIcon name="approval" />
+                Leave approvals
+              </NavLink>
+              <NavLink to="/admin/calendar">
+                <NavIcon name="settings" />
+                Calendar settings
+              </NavLink>
               <NavLink to="/admin" end>
+                <NavIcon name="admin" />
                 Administration
               </NavLink>
             </>
@@ -68,7 +94,10 @@ export function AppLayout() {
       </aside>
       <div className="workspace">
         <div className="topbar">
-          <span>{membership.organisationName}</span>
+          <span className="workspace-institution">
+            <span className="institution-code">{theme.code}</span>
+            {membership.organisationName}
+          </span>
           <span className="live-indicator">Your leave workspace</span>
         </div>
         <main
@@ -81,7 +110,7 @@ export function AppLayout() {
           <Outlet />
         </main>
         <footer className="app-footer">
-          The Leave Tracker · D-Lab Blitz Day 6{" "}
+          The Leave Tracker · {membership.organisationName}{" "}
           <span>Time away. Peace of mind.</span>
         </footer>
       </div>

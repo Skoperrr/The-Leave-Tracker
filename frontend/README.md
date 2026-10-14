@@ -148,3 +148,31 @@ sending an explicit status and resetting pagination when it changes. The
 misleading “All statuses” option was removed because omitting status makes the
 existing backend return only Pending. Employee request history retains its
 working “All statuses” filter.
+
+## Institution branding
+
+The selected organisation controls its logo, sidebar, active navigation, primary
+buttons, balance cards and header accents. The Leave Tracker uses a shared
+calendar/check mark and `/favicon.svg`. Local SVG navigation icons retain text
+labels. Unknown organisations use the neutral Leave Tracker theme; leave status
+and error colours keep their semantic meaning.
+
+Palette sources checked on 14 October 2026:
+
+| Organisation        | Palette                                           | Source                                                                                   |
+| ------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| D-Lab               | Navy `#1A294B`, gold `#EBB532`, green `#0B745C`   | [Official brand tokens](https://d-lab.co.za/wp-content/uploads/elementor/css/post-8.css) |
+| The Field Institute | Black `#080808`, cyan `#15E0FB`, yellow `#F9BF11` | [Official website](https://www.thefieldinstitute.com/)                                   |
+| StrideShift Global  | Navy logo, cool blue, warm off-white `#F6F4EE`    | [Official website](https://www.strideshift.ai/)                                          |
+
+Original logos are stored locally in `public/brands` from the official sites:
+D-Lab's white wordmark with coloured stars, The Field Institute's white geometric
+mark, and StrideShift's navy wordmark (displayed on a white panel for contrast).
+
+The development-only `/preview/dashboard` selector includes all three themes.
+With Vite running, use `npm run screenshots -- themes`; set `KOPANO_BROWSER_EXE`
+to an installed Chrome/Edge executable where needed. [Browser evidence](screenshots/theme-verification.json)
+records desktop/mobile checks at 1440px/390px, loaded logos, navigation icons and
+no horizontal page overflow or runtime exceptions. Screenshots use labelled
+sample data; automated flow tests also verify membership selection changes the
+workspace theme.

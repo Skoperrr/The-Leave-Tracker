@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import { BalanceCards, UpcomingLeaveList } from "../components/DashboardCards";
 import { EmptyState, PageHeading } from "../components/ui";
 import { RequestCard } from "../components/RequestCard";
+import { Brand } from "../components/Brand";
+import { OrganisationBrand } from "../components/OrganisationBrand";
+import { NavIcon, type NavIconName } from "../components/NavIcon";
+import { getOrganisationTheme } from "../theme/organisations";
 import type { LeaveBalance, LeaveRequest, LeaveType } from "../types/api";
 
 // Visual fixtures only: this module is lazy-loaded behind import.meta.env.DEV.
@@ -15,6 +19,13 @@ const organisations = [
     allocated: 18,
     approved: 2,
     pending: 5,
+  },
+  {
+    id: "preview-stride",
+    name: "StrideShift Global",
+    allocated: 20,
+    approved: 4,
+    pending: 2,
   },
 ];
 
@@ -117,7 +128,7 @@ export default function DashboardPreview() {
   const upcoming = requests.filter((request) => request.status === "APPROVED");
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={getOrganisationTheme(org.name).key}>
       <a className="skip-link" href="#main">
         Skip to content
       </a>
@@ -127,14 +138,10 @@ export default function DashboardPreview() {
           className="brand"
           aria-label="The Leave Tracker dashboard preview"
         >
-          <span className="brand-symbol" aria-hidden="true">
-            LT
-          </span>
-          <span>
-            The Leave Tracker<small>LEAVE, TOGETHER</small>
-          </span>
+          <Brand />
         </Link>
         <div className="org-control">
+          <OrganisationBrand name={org.name} />
           <label htmlFor="preview-organisation">PREVIEW ORGANISATION</label>
           <select
             id="preview-organisation"
@@ -151,10 +158,18 @@ export default function DashboardPreview() {
         </div>
         <nav className="main-nav" aria-label="Preview navigation">
           <a className="active" href="#main" aria-current="page">
+            <NavIcon name="overview" />
             Overview
           </a>
-          {["Request leave", "My requests", "Team calendar"].map((label) => (
+          {(
+            [
+              ["Request leave", "request"],
+              ["My requests", "history"],
+              ["Team calendar", "calendar"],
+            ] as [string, NavIconName][]
+          ).map(([label, icon]) => (
             <button className="preview-nav" key={label} type="button" disabled>
+              <NavIcon name={icon} />
               {label}
             </button>
           ))}
@@ -232,7 +247,7 @@ export default function DashboardPreview() {
           </section>
         </main>
         <footer className="app-footer">
-          The Leave Tracker · D-Lab Blitz Day 6{" "}
+          The Leave Tracker · {org.name}{" "}
           <span>Development preview · Sample data</span>
         </footer>
       </div>

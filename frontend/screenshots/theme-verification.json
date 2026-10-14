@@ -1,0 +1,85 @@
+{
+  "route": "/preview/dashboard",
+  "views": [
+    {
+      "view": "dlab-desktop",
+      "viewportWidth": 1440,
+      "contentWidth": 1440,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false,
+      "theme": "dlab",
+      "logoLoaded": true,
+      "icons": 4,
+      "sidebarColour": "rgb(26, 41, 75)"
+    },
+    {
+      "view": "dlab-mobile",
+      "viewportWidth": 390,
+      "contentWidth": 390,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false,
+      "theme": "dlab",
+      "logoLoaded": true,
+      "icons": 4,
+      "sidebarColour": "rgb(26, 41, 75)"
+    },
+    {
+      "view": "field-desktop",
+      "viewportWidth": 1440,
+      "contentWidth": 1440,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false,
+      "theme": "field",
+      "logoLoaded": true,
+      "icons": 4,
+      "sidebarColour": "rgb(8, 8, 8)"
+    },
+    {
+      "view": "field-mobile",
+      "viewportWidth": 390,
+      "contentWidth": 390,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false,
+      "theme": "field",
+      "logoLoaded": true,
+      "icons": 4,
+      "sidebarColour": "rgb(8, 8, 8)"
+    },
+    {
+      "view": "stride-desktop",
+      "viewportWidth": 1440,
+      "contentWidth": 1440,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false,
+      "theme": "stride",
+      "logoLoaded": true,
+      "icons": 4,
+      "sidebarColour": "rgb(24, 43, 75)"
+    },
+    {
+      "view": "stride-mobile",
+      "viewportWidth": 390,
+      "contentWidth": 390,
+      "formVisible": false,
+      "dashboardVisible": true,
+      "sampleDataLabel": true,
+      "configurationRequired": false,
+      "theme": "stride",
+      "logoLoaded": true,
+      "icons": 4,
+      "sidebarColour": "rgb(24, 43, 75)"
+    }
+  ],
+  "browserExceptions": 0,
+  "note": "Live backend flows require configured Supabase credentials and the Express API."
+}

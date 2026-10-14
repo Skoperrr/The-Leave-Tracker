@@ -13,9 +13,10 @@ const browserPath = [
 ].find((path) => path && existsSync(path));
 if (!browserPath)
   throw new Error("Set KOPANO_BROWSER_EXE to an installed Chromium browser.");
-const dashboard = process.argv[2] === "dashboard";
+const themes = process.argv[2] === "themes";
+const dashboard = themes || process.argv[2] === "dashboard";
 const route = dashboard ? "/preview/dashboard" : "/sign-in";
-const screenshotName = dashboard ? "dashboard" : "sign-in";
+const screenshotName = themes ? "theme" : dashboard ? "dashboard" : "sign-in";
 const readyExpression = dashboard
   ? 'Boolean(document.querySelector(".preview-banner") && document.querySelector(".balance-number"))'
   : 'Boolean(document.querySelector("#email") && document.querySelector("#password"))';
@@ -88,17 +89,27 @@ try {
       const timer = setTimeout(() => {
         pending.delete(id);
         reject(new Error(`Browser command timed out: ${method}`));
-      }, 10000);
+      }, 30000);
       pending.set(id, { resolve, reject, timer });
       socket.send(JSON.stringify({ id, method, params }));
     });
   await send("Page.enable");
   await send("Runtime.enable");
   const evidence = [];
-  for (const view of [
+  const viewports = [
     { name: "desktop", width: 1440, height: 1000, mobile: false },
     { name: "mobile", width: 390, height: 844, mobile: true },
-  ]) {
+  ];
+  const views = themes
+    ? ["dlab", "field", "stride"].flatMap((theme) =>
+        viewports.map((view) => ({
+          ...view,
+          theme,
+          name: `${theme}-${view.name}`,
+        })),
+      )
+    : viewports;
+  for (const view of views) {
     await send("Emulation.setDeviceMetricsOverride", {
       width: view.width,
       height: view.height,
@@ -119,6 +130,11 @@ try {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     if (!ready) throw new Error("The requested preview did not render.");
+    if (themes) {
+      await send("Runtime.evaluate", {
+        expression: `(() => { const select = document.querySelector('#preview-organisation'); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, 'preview-${view.theme}'); select.dispatchEvent(new Event('change', { bubbles: true })); })()`,
+      });
+    }
     await send("Runtime.evaluate", {
       expression:
         "Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 3000))])",
@@ -131,6 +147,19 @@ try {
       returnByValue: true,
     });
     const dimensions = result.result.value;
+    if (themes) {
+      const branding = await send("Runtime.evaluate", {
+        expression: `({ theme: document.querySelector('.app-shell').dataset.theme, logoLoaded: [...document.querySelectorAll('.institution-brand img')].every(img => img.complete && img.naturalWidth > 0), icons: document.querySelectorAll('.main-nav .nav-icon').length, sidebarColour: getComputedStyle(document.querySelector('.sidebar')).backgroundColor })`,
+        returnByValue: true,
+      });
+      Object.assign(dimensions, branding.result.value);
+      if (
+        dimensions.theme !== view.theme ||
+        !dimensions.logoLoaded ||
+        dimensions.icons !== 4
+      )
+        throw new Error("Theme branding did not render correctly.");
+    }
     if (
       dimensions.viewportWidth !== view.width ||
       dimensions.contentWidth > view.width
@@ -161,7 +190,11 @@ try {
   await writeFile(
     resolve(
       output,
-      dashboard ? "dashboard-verification.json" : "verification.json",
+      themes
+        ? "theme-verification.json"
+        : dashboard
+          ? "dashboard-verification.json"
+          : "verification.json",
     ),
     JSON.stringify(
       {

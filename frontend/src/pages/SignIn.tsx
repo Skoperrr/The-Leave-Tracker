@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { supabase } from "../auth/supabase";
 import { signInSchema, type SignInValues } from "../hooks/validation";
 import { ErrorNotice, FieldError, Loading } from "../components/ui";
+import { Brand } from "../components/Brand";
 export function SignIn() {
   const { session, loading, expired, authError, recovering } = useAuth();
   const location = useLocation();
@@ -34,12 +35,7 @@ export function SignIn() {
     <main className="signin">
       <section className="signin-story">
         <div className="brand">
-          <span className="brand-symbol" aria-hidden="true">
-            LT
-          </span>
-          <span>
-            The Leave Tracker<small>LEAVE, TOGETHER</small>
-          </span>
+          <Brand />
         </div>
         <div>
           <p className="eyebrow">A LITTLE SPACE TO RECHARGE</p>

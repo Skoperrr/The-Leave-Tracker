@@ -40,6 +40,24 @@ describe("Read-only dashboard preview", () => {
     expect(
       screen.getByText(/Here's your leave at The Field Institute/),
     ).toBeInTheDocument();
+    expect(document.querySelector(".app-shell")).toHaveAttribute(
+      "data-theme",
+      "field",
+    );
+    expect(
+      screen.getByRole("img", { name: "The Field Institute logo" }),
+    ).toHaveAttribute("src", "/brands/field.png");
+    await user.selectOptions(
+      screen.getByLabelText("PREVIEW ORGANISATION"),
+      "preview-stride",
+    );
+    expect(document.querySelector(".app-shell")).toHaveAttribute(
+      "data-theme",
+      "stride",
+    );
+    expect(
+      screen.getByRole("img", { name: "StrideShift Global logo" }),
+    ).toBeInTheDocument();
     expect(fetcher).not.toHaveBeenCalled();
   });
 });
