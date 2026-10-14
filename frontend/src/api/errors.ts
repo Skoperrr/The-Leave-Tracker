@@ -1,4 +1,20 @@
 const messages: Record<string, string> = {
+  EMAIL_CONFIRMATION_REQUIRED:
+    "Confirm your email before opening your workspace.",
+  PROFILE_CONFLICT:
+    "This account needs administrator assistance before it can be linked.",
+  MEMBERSHIP_EXISTS:
+    "This account already has a membership here. Existing roles are not changed.",
+  ALLOCATION_EXISTS:
+    "An allocation already exists for this member, leave type and year.",
+  GOOGLE_NOT_CONFIGURED:
+    "Google Calendar is not configured yet. Your internal calendar and leave approvals still work.",
+  GOOGLE_NOT_CONNECTED: "Connect Google and select a shared calendar first.",
+  GOOGLE_REAUTH_REQUIRED: "Reconnect Google before continuing.",
+  GOOGLE_CALENDAR_ALREADY_ASSIGNED:
+    "This calendar belongs to another organisation. Choose a separate calendar.",
+  CALENDAR_SYNC_BUSY:
+    "A sync is running. Wait a moment, refresh, and try again.",
   UNAUTHENTICATED: "Your session has expired. Please sign in again.",
   FORBIDDEN: "You do not have permission to view or change this resource.",
   NOT_FOUND: "This resource is unavailable or you do not have access to it.",

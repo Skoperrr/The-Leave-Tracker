@@ -53,6 +53,7 @@ export function AppLayout() {
           {membership.role === "ADMIN" && (
             <>
               <NavLink to="/admin/approvals">Leave approvals</NavLink>
+              <NavLink to="/admin/calendar">Calendar settings</NavLink>
               <NavLink to="/admin" end>
                 Administration
               </NavLink>

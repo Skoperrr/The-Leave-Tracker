@@ -1317,3 +1317,42 @@ textarea[aria-invalid="true"] {
 .signin-form {
   min-width: 0;
 }
+
+/* Organisation administration and onboarding */
+.onboarding-panel {
+  width: min(100%, 560px);
+}
+.admin-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+.admin-tools .panel {
+  min-width: 0;
+}
+.admin-tools input,
+.admin-tools select,
+.onboarding-panel input {
+  width: 100%;
+}
+.admin-tools .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.main-content > .panel {
+  margin-bottom: 20px;
+}
+.admin-tools button,
+.onboarding-panel button {
+  margin-top: 18px;
+}
+.membership-details dd {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .admin-tools {
+    grid-template-columns: 1fr;
+  }
+}

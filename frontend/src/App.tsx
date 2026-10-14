@@ -8,6 +8,8 @@ import {
 import { Link, Route, Routes } from "react-router-dom";
 import { RequireAuth, RequireRole } from "./auth/Guards";
 import { AppLayout } from "./layouts/AppLayout";
+import { SignUp } from "./pages/SignUp";
+import { CalendarSettings } from "./pages/CalendarSettings";
 import { SignIn } from "./pages/SignIn";
 import { Dashboard } from "./pages/Dashboard";
 import { NewRequest } from "./pages/NewRequest";
@@ -67,6 +69,7 @@ export function App() {
         />
       )}
       <Route path="/sign-in" element={<SignIn />} />
+      <Route path="/sign-up" element={<SignUp />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
           <Route index element={<Dashboard />} />
@@ -78,6 +81,7 @@ export function App() {
           </Route>
           <Route element={<RequireRole roles={["ADMIN"]} />}>
             <Route path="admin" element={<Admin />} />
+            <Route path="admin/calendar" element={<CalendarSettings />} />
             <Route path="admin/approvals" element={<ManagerInbox />} />
           </Route>
           <Route

@@ -86,3 +86,35 @@ Implementation follows [the frontend specification](../docs/KOPANO_FRONTEND_SPEC
 - The read-only dashboard preview was checked at 1440px and 390px with no overflow or runtime exceptions: [desktop](screenshots/dashboard-desktop.png), [mobile](screenshots/dashboard-mobile.png), [verification data](screenshots/dashboard-verification.json). Run `npm run screenshots -- dashboard` to recapture it. Sample preview data is absent from the production bundle.
 
 To recapture sign-in previews, start `npm run dev`, then run `npm run screenshots` in a second terminal. This optional helper requires Node 22+ and installed Chrome or Edge on Windows; set `KOPANO_BROWSER_EXE` for another installed Chromium executable. It uses isolated ignored profiles inside `.preview/` and sends no synthetic identity or application data. `npm run format` and `npm run format:check` maintain the source style.
+
+## Email onboarding and Google Calendar administration
+
+The frontend implements the additions in
+[EMAIL_CALENDAR_BACKEND_HANDOFF.md](../docs/EMAIL_CALENDAR_BACKEND_HANDOFF.md).
+
+- `/sign-up` uses Supabase email/password signup and confirmation, with neutral
+  confirmation feedback. Passwords go only to Supabase. Signup creates no roles,
+  memberships or leave entitlement.
+- Authenticated workspace entry calls `/auth/profile` before rendering. It uses
+  the display name from signup or an existing profile; accounts without a name
+  can complete their profile. Existing profiles are preserved by the API. Accounts
+  without active memberships see the organisation-access waiting state.
+- `/admin` assigns EMPLOYEE membership by exact email and creates explicit
+  allocations. Manager/member choices show membership IDs because the API does
+  not expose a general directory or member display names. Existing allocations
+  and memberships cannot be edited/reactivated through these creation forms.
+- `/admin/calendar` handles Google consent in the same tab with the browser nonce
+  cookie, paginated writable calendars, explicit invitation opt-in, a read-only
+  access check, sync status/retry, and disconnect confirmation. Callback feedback
+  is consumed safely at `/admin` and does not expose raw query text.
+
+Keep API calls same-origin on Vercel. Configure Supabase confirmation delivery
+and redirect allowlists, Google server credentials, a distinct shared calendar
+per organisation, and the trusted worker as described in
+[CALENDAR_EMAIL_SETUP.md](../docs/CALENDAR_EMAIL_SETUP.md). No scheduler secret is
+read by frontend code and the frontend never invokes the internal worker.
+
+Automated UI/API fixture tests cover payloads, profile gating, role restrictions,
+calendar pagination, cookie-backed consent, invitation defaults, retries and
+status wording. Provider consent, SMTP delivery, live migrations and Google event
+or invitation delivery require configured integration verification.

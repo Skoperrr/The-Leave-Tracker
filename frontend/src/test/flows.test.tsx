@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App } from "../App";
+import { connectGoogleCalendar } from "../pages/CalendarSettings";
 import { AuthProvider } from "../auth/AuthProvider";
 import { MonthCalendar } from "../components/MonthCalendar";
 import type { CalendarEvent, LeaveRequest, Me, Membership } from "../types/api";
@@ -17,9 +18,13 @@ const auth = vi.hoisted(() => ({
   session: {
     access_token: "test-access-token",
     user: { id: "auth-employee" },
-  } as { access_token: string; user: { id: string } } | null,
+  } as {
+    access_token: string;
+    user: { id: string; user_metadata?: { full_name?: string } };
+  } | null,
   listener: null as ((event: string, session: unknown) => void) | null,
   signIn: vi.fn(),
+  signUp: vi.fn(),
 }));
 vi.mock("../auth/supabase", () => ({
   supabase: {
@@ -43,6 +48,7 @@ vi.mock("../auth/supabase", () => ({
         };
       },
       signInWithPassword: auth.signIn,
+      signUp: auth.signUp,
       signOut: async () => {
         auth.session = null;
         auth.listener?.("SIGNED_OUT", null);
@@ -75,6 +81,9 @@ const field = membership(
 let profile: Me;
 let requests: LeaveRequest[];
 let calls: { path: string; method: string; body?: Record<string, unknown> }[];
+let profileWrites: Record<string, unknown>[];
+let assignedMembers: Membership[];
+let google: import("../types/api").GoogleStatus;
 let failure: { path: string; status: number; code: string } | null;
 const createRequest = (id: string, org: Membership): LeaveRequest => ({
   id,
@@ -110,6 +119,18 @@ beforeEach(() => {
     user: { id: "auth-employee" },
   };
   auth.signIn.mockReset();
+  auth.signUp.mockReset();
+  auth.signUp.mockResolvedValue({ data: { session: null }, error: null });
+  profileWrites = [];
+  assignedMembers = [];
+  google = {
+    organisationId: "org-dlab",
+    provider: "GOOGLE",
+    connectionStatus: "CONNECTED",
+    calendarId: null,
+    invitationsEnabled: false,
+    lastSync: null,
+  };
   profile = {
     id: "profile-employee",
     email: "employee@example.test",
@@ -126,6 +147,17 @@ beforeEach(() => {
       const path = url.pathname.replace("/api/v1", "");
       const method = init?.method ?? "GET";
       const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      if (path === "/auth/profile") {
+        profileWrites.push(body);
+        if (failure?.path === path)
+          return new Response(
+            JSON.stringify({
+              error: { code: failure.code, message: "Rejected" },
+            }),
+            { status: failure.status },
+          );
+        return response(profile);
+      }
       calls.push({ path: `${path}${url.search}`, method, body });
       expect((init?.headers as Record<string, string>).Authorization).toBe(
         "Bearer test-access-token",
@@ -229,12 +261,103 @@ beforeEach(() => {
               reason: "PRIVATE_REASON_123",
             })),
         );
+      if (path === "/admin/memberships" && method === "POST") {
+        const member = membership(
+          "new-member",
+          body.organisationId,
+          "D-Lab",
+          "EMPLOYEE",
+        );
+        assignedMembers.push(member);
+        return response(member);
+      }
       if (path === "/admin/memberships")
-        return response(
-          profile.memberships.filter(
+        return response([
+          ...profile.memberships.filter(
             (member) => member.organisationId === orgId,
           ),
+          ...assignedMembers,
+        ]);
+      if (path === "/admin/allocations")
+        return response({
+          id: "allocation",
+          ...body,
+          createdAt: "2026-10-14T00:00:00Z",
+          updatedAt: "2026-10-14T00:00:00Z",
+        });
+      if (path === "/integrations/google/status") return response(google);
+      if (path === "/integrations/google/connect") {
+        expect(init?.credentials).toBe("include");
+        return response({
+          authorisationUrl:
+            "https://accounts.google.com/o/oauth2/v2/auth?state=opaque-state",
+          expiresAt: "2026-10-14T00:10:00Z",
+        });
+      }
+      if (path === "/integrations/google/calendars")
+        return new Response(
+          JSON.stringify({
+            data: url.searchParams.has("cursor")
+              ? [
+                  {
+                    id: "second-calendar",
+                    summary: "Another calendar",
+                    timeZone: "Africa/Johannesburg",
+                    accessRole: "writer",
+                  },
+                ]
+              : [
+                  {
+                    id: "shared-calendar",
+                    summary: "D-Lab shared",
+                    timeZone: "Africa/Johannesburg",
+                    accessRole: "owner",
+                  },
+                  {
+                    id: "read-only",
+                    summary: "Read-only calendar",
+                    timeZone: "UTC",
+                    accessRole: "reader",
+                  },
+                ],
+            meta: {
+              nextPageToken: url.searchParams.has("cursor")
+                ? null
+                : "next-page",
+            },
+          }),
+          { status: 200 },
         );
+      if (path === "/integrations/google/settings") {
+        google = {
+          ...google,
+          calendarId: body.calendarId,
+          invitationsEnabled: body.invitationsEnabled,
+        };
+        return response(google);
+      }
+      if (path === "/integrations/google/test")
+        return response({
+          calendarId: google.calendarId,
+          writable: true,
+          checkedAt: "2026-10-14T00:00:00Z",
+        });
+      if (path === "/integrations/google/disconnect") {
+        google = {
+          ...google,
+          connectionStatus: "DISCONNECTED",
+          calendarId: null,
+          invitationsEnabled: false,
+        };
+        return response(google);
+      }
+      if (path === "/integrations/google/retry") {
+        google = {
+          ...google,
+          lastSync: { ...google.lastSync!, status: "PENDING" },
+        };
+        return response(google);
+      }
       throw new Error(`Undocumented test request: ${method} ${path}`);
     }),
   );
@@ -407,7 +530,7 @@ describe("Frontend integration flows", () => {
       screen.queryByRole("button", { name: "Approve request" }),
     ).not.toBeInTheDocument();
   });
-  it.each(["/manager", "/admin", "/admin/approvals"])(
+  it.each(["/manager", "/admin", "/admin/approvals", "/admin/calendar"])(
     "guards direct employee navigation to %s without fetching protected resources",
     async (path) => {
       mount(path);
@@ -542,5 +665,252 @@ describe("Shared calendar privacy and inclusive boundaries", () => {
     expect(screen.queryByText("PRIVATE_REASON_123")).not.toBeInTheDocument();
     expect(screen.queryByText("Private type")).not.toBeInTheDocument();
     expect(screen.queryByText("Ignored server title")).not.toBeInTheDocument();
+  });
+});
+
+describe("Email and calendar handoff", () => {
+  it("shows neutral email confirmation and sends signup only to Supabase", async () => {
+    auth.session = null;
+    mount("/sign-up");
+    await userEvent.type(screen.getByLabelText("Full name"), "New Person");
+    await userEvent.type(
+      screen.getByLabelText("Email address"),
+      "new@example.com",
+    );
+    await userEvent.type(
+      screen.getByLabelText("Password", { exact: true }),
+      "ExamplePassword123!",
+    );
+    await userEvent.type(
+      screen.getByLabelText("Confirm password"),
+      "ExamplePassword123!",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create account" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Check your email" }),
+    ).toBeInTheDocument();
+    expect(auth.signUp).toHaveBeenCalledWith({
+      email: "new@example.com",
+      password: "ExamplePassword123!",
+      options: {
+        data: { full_name: "New Person" },
+        emailRedirectTo: `${window.location.origin}/sign-in`,
+      },
+    });
+    expect(calls).toEqual([]);
+  });
+  it("bootstraps a profile before displaying the no-membership state", async () => {
+    profile.memberships = [];
+    mount("/");
+    expect(
+      await screen.findByRole("heading", { name: "No active organisation" }),
+    ).toBeInTheDocument();
+    expect(profileWrites).toEqual([{ fullName: "Ayanda Example" }]);
+    expect(calls.some((call) => call.path.startsWith("/balances"))).toBe(false);
+  });
+  it("assigns employee membership then creates an explicit allocation", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    mount("/admin");
+    await screen.findByRole("heading", { name: "Assign organisation access" });
+    await userEvent.type(
+      screen.getByLabelText("Account email"),
+      "New@Example.com",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Assign employee access" }),
+    );
+    await screen.findByText(/Employee access assigned/);
+    expect(
+      calls.find(
+        (call) => call.path === "/admin/memberships" && call.method === "POST",
+      )?.body,
+    ).toEqual({ organisationId: "org-dlab", email: "new@example.com" });
+    await userEvent.selectOptions(
+      screen.getByLabelText("Member", { exact: true }),
+      "new-member",
+    );
+    await userEvent.selectOptions(
+      screen.getByLabelText("Leave type"),
+      "annual-org-dlab",
+    );
+    fireEvent.change(screen.getByLabelText("Policy year"), {
+      target: { value: "2026" },
+    });
+    await userEvent.type(screen.getByLabelText("Allocated days"), "18.5");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create allocation" }),
+    );
+    await screen.findByText("Leave allocation created.");
+    expect(
+      calls.find((call) => call.path === "/admin/allocations")?.body,
+    ).toEqual({
+      organisationId: "org-dlab",
+      membershipId: "new-member",
+      leaveTypeId: "annual-org-dlab",
+      year: 2026,
+      allocatedDays: 18.5,
+    });
+  });
+  it("paginates writable calendars and saves invitations only on explicit opt-in", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    mount("/admin/calendar");
+    await screen.findByRole("option", { name: /D-Lab shared/ });
+    expect(
+      screen.queryByRole("option", { name: /Read-only calendar/ }),
+    ).not.toBeInTheDocument();
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).not.toBeChecked();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Load more calendars" }),
+    );
+    await screen.findByRole("option", { name: /Another calendar/ });
+    await userEvent.selectOptions(
+      screen.getByLabelText("Shared calendar"),
+      "second-calendar",
+    );
+    await userEvent.click(checkbox);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Save calendar settings" }),
+    );
+    await screen.findByText(/Settings saved/);
+    expect(calls.find((call) => call.method === "PATCH")?.body).toEqual({
+      calendarId: "second-calendar",
+      invitationsEnabled: true,
+    });
+    expect(calls.find((call) => call.method === "PATCH")?.path).toBe(
+      "/integrations/google/settings?organisationId=org-dlab",
+    );
+    expect(calls.some((call) => call.path.includes("/internal/"))).toBe(false);
+  });
+  it("shows accepted notifications without claiming delivery and retries the exact job", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    google.lastSync = {
+      jobId: "job-1",
+      status: "FAILED",
+      attemptedAt: null,
+      errorCode: "GOOGLE_TEMPORARY",
+      invitationStatus: "NOTIFICATIONS_REQUESTED",
+      recipientCount: 4,
+    };
+    mount("/admin/calendar");
+    expect(
+      await screen.findByText(/Email delivery and acceptance are not verified/),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Retry last sync" }),
+    );
+    await screen.findByText(/Retry queued/);
+    expect(
+      calls.find((call) => call.path === "/integrations/google/retry")?.body,
+    ).toEqual({ organisationId: "org-dlab", jobId: "job-1" });
+  });
+  it("requires confirmation before disconnecting and handles the returned state", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    mount("/admin/calendar");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Disconnect Google" }),
+    );
+    expect(calls.some((call) => call.method === "DELETE")).toBe(false);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Confirm disconnect" }),
+    );
+    await screen.findByText("Not connected");
+    expect(calls.find((call) => call.method === "DELETE")?.path).toBe(
+      "/integrations/google/disconnect?organisationId=org-dlab",
+    );
+  });
+  it("shows configuration errors without exposing a scheduler action", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    failure = {
+      path: "/integrations/google/status",
+      status: 503,
+      code: "GOOGLE_NOT_CONFIGURED",
+    };
+    mount("/admin/calendar");
+    expect(
+      await screen.findByText(/Google Calendar is not configured yet/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Connect Google" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("Handoff access and connection boundaries", () => {
+  it("creates profiles from display-name metadata before loading workspace resources", async () => {
+    auth.session!.user.user_metadata = { full_name: "New Person" };
+    profile.fullName = "New Person";
+    profile.memberships = [];
+    mount("/");
+    await screen.findByRole("heading", { name: "No active organisation" });
+    expect(profileWrites).toEqual([{ fullName: "New Person" }]);
+    expect(calls).toEqual([]);
+  });
+  it("does not open the workspace when email confirmation is required", async () => {
+    auth.session!.user.user_metadata = { full_name: "New Person" };
+    failure = {
+      path: "/auth/profile",
+      status: 403,
+      code: "EMAIL_CONFIRMATION_REQUIRED",
+    };
+    mount("/");
+    await screen.findByText(
+      "Confirm your email before opening your workspace.",
+    );
+    expect(calls.some((call) => call.path.startsWith("/balances"))).toBe(false);
+  });
+  it("starts Google consent in the same tab with cookies and no bearer in the URL", async () => {
+    const navigate = vi.fn();
+    await connectGoogleCalendar("org-dlab", navigate);
+    expect(navigate).toHaveBeenCalledWith(
+      "https://accounts.google.com/o/oauth2/v2/auth?state=opaque-state",
+    );
+    expect(navigate.mock.calls[0][0]).not.toContain("test-access-token");
+    expect(calls[0].path).toBe(
+      "/integrations/google/connect?organisationId=org-dlab",
+    );
+  });
+  it("shows safe callback feedback and ignores arbitrary query text", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    mount("/admin?calendarConnection=%3Cscript%3Esecret%3C%2Fscript%3E");
+    expect(
+      await screen.findByText(/Google connection could not be completed/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("<script>secret</script>"),
+    ).not.toBeInTheDocument();
+  });
+  it("does not disclose an existing account through signup feedback", async () => {
+    auth.session = null;
+    auth.signUp.mockResolvedValue({
+      data: { session: null },
+      error: {
+        code: "user_already_exists",
+        message: "User already registered",
+      },
+    });
+    mount("/sign-up");
+    await userEvent.type(screen.getByLabelText("Full name"), "New Person");
+    await userEvent.type(
+      screen.getByLabelText("Email address"),
+      "new@example.com",
+    );
+    await userEvent.type(
+      screen.getByLabelText("Password", { exact: true }),
+      "ExamplePassword123!",
+    );
+    await userEvent.type(
+      screen.getByLabelText("Confirm password"),
+      "ExamplePassword123!",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Create account" }),
+    );
+    await screen.findByRole("heading", { name: "Check your email" });
+    expect(
+      screen.queryByText("User already registered"),
+    ).not.toBeInTheDocument();
   });
 });

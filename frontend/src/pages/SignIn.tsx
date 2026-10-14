@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../auth/AuthProvider";
@@ -121,8 +121,8 @@ export function SignIn() {
             </button>
           </form>
           <p className="signin-help">
-            Need an account or help signing in? Contact your organisation
-            administrator.
+            Need an account? <Link to="/sign-up">Create an account</Link>.
+            Contact your administrator for organisation access.
           </p>
         </div>
       </section>

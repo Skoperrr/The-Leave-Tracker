@@ -60,9 +60,10 @@ export type CalendarEvent = {
   endDate: string;
   allDay: true;
 };
-export type ApiEnvelope<T> = {
+export type PaginationMeta = { page: number; pageSize: number; total: number };
+export type ApiEnvelope<T, Meta = PaginationMeta> = {
   data: T;
-  meta?: { page: number; pageSize: number; total: number };
+  meta?: Meta;
 };
 export type ApiError = {
   error: { code: string; message: string; details?: Record<string, unknown> };
@@ -81,4 +82,37 @@ export type CreatedLeaveRequests = {
 export type LeaveDecision = {
   decision: "APPROVE" | "DECLINE";
   comment?: string;
+};
+
+export type AdminAllocation = {
+  id: string;
+  organisationId: string;
+  membershipId: string;
+  leaveTypeId: string;
+  year: number;
+  allocatedDays: number;
+  createdAt: string;
+  updatedAt: string;
+};
+export type GoogleCalendar = {
+  id: string;
+  summary: string;
+  timeZone: string;
+  accessRole: string;
+};
+export type GoogleStatus = {
+  organisationId: string;
+  provider: "GOOGLE";
+  connectionStatus: "DISCONNECTED" | "CONNECTED" | "REAUTH_REQUIRED";
+  calendarId: string | null;
+  invitationsEnabled: boolean;
+  lastSync: null | {
+    jobId: string;
+    status:
+      "PENDING" | "PROCESSING" | "SUCCEEDED" | "RETRY" | "FAILED" | "CANCELLED";
+    attemptedAt: string | null;
+    errorCode: string | null;
+    invitationStatus: string | null;
+    recipientCount: number | null;
+  };
 };

@@ -1,5 +1,8 @@
 import { apiClient } from "./client";
 import type {
+  AdminAllocation,
+  GoogleCalendar,
+  GoogleStatus,
   CalendarEvent,
   CreatedLeaveRequests,
   CreateLeaveRequest,
@@ -26,6 +29,67 @@ function query(values: Record<string, string | number | undefined>) {
 }
 const segment = encodeURIComponent;
 export const api = {
+  profile: (fullName: string, signal?: AbortSignal) =>
+    apiClient<Me>("/auth/profile", {
+      method: "POST",
+      body: { fullName },
+      signal,
+    }),
+  assignMembership: (body: {
+    organisationId: string;
+    email: string;
+    managerMembershipId?: string;
+  }) => apiClient<Membership>("/admin/memberships", { method: "POST", body }),
+  allocate: (body: {
+    organisationId: string;
+    membershipId: string;
+    leaveTypeId: string;
+    year: number;
+    allocatedDays: number;
+  }) =>
+    apiClient<AdminAllocation>("/admin/allocations", { method: "POST", body }),
+  googleStatus: (organisationId: string, signal?: AbortSignal) =>
+    apiClient<GoogleStatus>(
+      `/integrations/google/status${query({ organisationId })}`,
+      { signal },
+    ),
+  googleConnect: (organisationId: string) =>
+    apiClient<{ authorisationUrl: string; expiresAt: string }>(
+      `/integrations/google/connect${query({ organisationId })}`,
+      { credentials: "include" },
+    ),
+  googleCalendars: (
+    organisationId: string,
+    cursor?: string,
+    signal?: AbortSignal,
+  ) =>
+    apiClient<GoogleCalendar[], { nextPageToken: string | null }>(
+      `/integrations/google/calendars${query({ organisationId, cursor })}`,
+      { signal },
+    ),
+  googleSettings: (
+    organisationId: string,
+    body: { calendarId?: string; invitationsEnabled?: boolean },
+  ) =>
+    apiClient<GoogleStatus>(
+      `/integrations/google/settings${query({ organisationId })}`,
+      { method: "PATCH", body },
+    ),
+  googleTest: (organisationId: string) =>
+    apiClient<{ calendarId: string; writable: true; checkedAt: string }>(
+      `/integrations/google/test${query({ organisationId })}`,
+      { method: "POST" },
+    ),
+  googleDisconnect: (organisationId: string) =>
+    apiClient<GoogleStatus>(
+      `/integrations/google/disconnect${query({ organisationId })}`,
+      { method: "DELETE" },
+    ),
+  googleRetry: (organisationId: string, jobId: string) =>
+    apiClient<GoogleStatus>("/integrations/google/retry", {
+      method: "POST",
+      body: { organisationId, jobId },
+    }),
   me: (signal?: AbortSignal) => apiClient<Me>("/me", { signal }),
   leaveTypes: (organisationId: string, signal?: AbortSignal) =>
     apiClient<LeaveType[]>(
