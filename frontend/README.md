@@ -176,3 +176,27 @@ records desktop/mobile checks at 1440px/390px, loaded logos, navigation icons an
 no horizontal page overflow or runtime exceptions. Screenshots use labelled
 sample data; automated flow tests also verify membership selection changes the
 workspace theme.
+
+## Responsive workspace navigation
+
+The live workspace and development preview share `WorkspaceShell`. The header
+shows the organisation code and its actual logo. On desktop, the header toggle
+collapses the sidebar to an icon rail; expanding restores the organisation
+selector and profile controls.
+
+At widths up to 760px, the sidebar becomes a modal side panel opened from the
+header or **More** in the bottom navigation. It supports a close button,
+backdrop dismissal, Escape, focus trapping/restoration and background scroll
+locking. Navigation and organisation changes close the panel. The bottom bar
+contains Overview, My requests, a raised circular centre action, Calendar and
+More. The centre action is Request leave for EMPLOYEE, or Leave approvals for
+MANAGER (`/manager`) and ADMIN (`/admin/approvals`). Reviewers can still request
+their own leave from the side panel. Safe-area padding keeps the bar clear of
+mobile home indicators and keeps page content above it.
+
+Automated fixtures verify role-specific destinations, desktop toggling,
+keyboard dismissal, focus restoration and organisation switching. Chrome theme
+captures verify desktop collapse and mobile panel opening/closing, five bottom
+items, loaded header logos and no page overflow at 1440px and 390px. Additional
+`theme-*-mobile-panel.png` and `theme-*-desktop-collapsed.png` screenshots show the
+open panel and collapsed rail; preview actions remain read-only.

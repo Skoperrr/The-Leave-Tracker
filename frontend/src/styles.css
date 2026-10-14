@@ -1588,3 +1588,268 @@ textarea[aria-invalid="true"] {
 .app-shell .upcoming-day {
   background: color-mix(in srgb, var(--accent) 15%, white);
 }
+
+/* Collapsible desktop rail and mobile navigation drawer. */
+.sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+.icon-button:hover {
+  background: var(--canvas);
+}
+.topbar {
+  gap: 14px;
+}
+.topbar .live-indicator {
+  margin-left: auto;
+}
+.header-logo {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: var(--green);
+}
+.header-logo img {
+  display: block;
+  width: 95px;
+  height: 28px;
+  object-fit: contain;
+}
+.header-logo-field img {
+  width: 32px;
+  height: 32px;
+}
+.header-logo-stride {
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.header-logo-stride img {
+  width: 130px;
+}
+.sidebar-collapsed .sidebar {
+  width: 80px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+.sidebar-collapsed .workspace {
+  margin-left: 80px;
+}
+.sidebar-collapsed .brand-wordmark,
+.sidebar-collapsed .org-control,
+.sidebar-collapsed .nav-label,
+.sidebar-collapsed .sidebar-footer {
+  display: none;
+}
+.sidebar-collapsed .main-nav {
+  margin-top: 32px;
+}
+.sidebar-collapsed .main-nav a,
+.sidebar-collapsed .preview-nav {
+  justify-content: center;
+  padding: 14px;
+}
+.preview-nav.active {
+  background: var(--accent);
+  color: var(--active-ink);
+}
+.bottom-nav,
+.panel-backdrop {
+  display: none;
+}
+.sidebar-close {
+  background: transparent;
+  color: #fff;
+  border-color: var(--sidebar-border);
+}
+.sidebar-close:hover {
+  background: var(--sidebar-hover);
+}
+@media (max-width: 760px) {
+  .app-shell .sidebar,
+  .app-shell.sidebar-collapsed .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(320px, 86vw);
+    height: 100dvh;
+    padding: 22px 18px;
+    z-index: 60;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    visibility: hidden;
+    display: flex;
+  }
+  .app-shell.panel-open .sidebar {
+    transform: translateX(0);
+    visibility: visible;
+  }
+  .app-shell .workspace,
+  .app-shell.sidebar-collapsed .workspace {
+    margin-left: 0;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+  .app-shell .sidebar .brand-wordmark,
+  .app-shell .sidebar .org-control,
+  .app-shell .sidebar .nav-label,
+  .app-shell .sidebar .sidebar-footer {
+    display: block;
+  }
+  .app-shell .sidebar .brand-wordmark {
+    max-width: 160px;
+  }
+  .app-shell .sidebar .brand {
+    font-size: 1.1rem;
+  }
+  .app-shell .sidebar .main-nav {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+  }
+  .app-shell .sidebar .main-nav a,
+  .app-shell .sidebar .preview-nav {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 13px 15px;
+    font-size: 0.88rem;
+    text-align: left;
+  }
+  .app-shell .sidebar .org-control {
+    margin-top: 26px;
+  }
+  .app-shell .sidebar .institution-brand {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .app-shell .sidebar .institution-brand img {
+    height: 54px;
+    max-width: 180px;
+  }
+  .app-shell .sidebar .institution-brand-field img {
+    width: 70px;
+    height: 70px;
+  }
+  .app-shell .sidebar .institution-brand-stride img {
+    height: 43px;
+  }
+  .app-shell .sidebar .sidebar-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 0;
+  }
+  .app-shell .sidebar .profile-email {
+    margin-top: 5px;
+    margin-bottom: 16px;
+  }
+  .app-shell .sidebar .sidebar-footer .secondary {
+    width: 100%;
+  }
+  .panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    border: 0;
+    background: rgb(9 16 28 / 55%);
+  }
+  .topbar {
+    height: 72px;
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .workspace-institution {
+    gap: 7px;
+    min-width: 0;
+  }
+  .institution-name {
+    display: none;
+  }
+  .header-logo img {
+    width: 105px;
+    height: 28px;
+  }
+  .header-logo-field img {
+    width: 32px;
+  }
+  .header-logo-stride img {
+    width: 125px;
+  }
+  .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: end;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -5px 25px rgb(0 0 0 / 6%);
+  }
+  .bottom-nav a,
+  .bottom-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    min-height: 52px;
+    padding: 5px 2px;
+    border: 0;
+    border-radius: 9px;
+    text-decoration: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.61rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .bottom-nav .nav-icon {
+    width: 23px;
+    height: 23px;
+  }
+  .bottom-nav a.active {
+    color: var(--green);
+    background: var(--canvas);
+  }
+  .bottom-nav .bottom-action {
+    margin-top: -28px;
+    color: var(--ink);
+    background: none;
+  }
+  .bottom-nav .bottom-action .nav-icon {
+    width: 62px;
+    height: 62px;
+    padding: 18px;
+    background: var(--accent);
+    color: var(--active-ink);
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 3px 12px rgb(0 0 0 / 12%);
+  }
+  .bottom-nav .bottom-action.active .nav-icon {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+  }
+  .bottom-nav button:disabled {
+    opacity: 0.65;
+  }
+}

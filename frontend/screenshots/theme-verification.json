@@ -12,7 +12,10 @@
       "theme": "dlab",
       "logoLoaded": true,
       "icons": 4,
-      "sidebarColour": "rgb(26, 41, 75)"
+      "sidebarColour": "rgb(26, 41, 75)",
+      "bottomItems": 0,
+      "drawerHidden": false,
+      "sidebarToggleVerified": true
     },
     {
       "view": "dlab-mobile",
@@ -25,7 +28,10 @@
       "theme": "dlab",
       "logoLoaded": true,
       "icons": 4,
-      "sidebarColour": "rgb(26, 41, 75)"
+      "sidebarColour": "rgb(26, 41, 75)",
+      "bottomItems": 5,
+      "drawerHidden": true,
+      "sidebarToggleVerified": true
     },
     {
       "view": "field-desktop",
@@ -38,7 +44,10 @@
       "theme": "field",
       "logoLoaded": true,
       "icons": 4,
-      "sidebarColour": "rgb(8, 8, 8)"
+      "sidebarColour": "rgb(8, 8, 8)",
+      "bottomItems": 0,
+      "drawerHidden": false,
+      "sidebarToggleVerified": true
     },
     {
       "view": "field-mobile",
@@ -51,7 +60,10 @@
       "theme": "field",
       "logoLoaded": true,
       "icons": 4,
-      "sidebarColour": "rgb(8, 8, 8)"
+      "sidebarColour": "rgb(8, 8, 8)",
+      "bottomItems": 5,
+      "drawerHidden": true,
+      "sidebarToggleVerified": true
     },
     {
       "view": "stride-desktop",
@@ -64,7 +76,10 @@
       "theme": "stride",
       "logoLoaded": true,
       "icons": 4,
-      "sidebarColour": "rgb(24, 43, 75)"
+      "sidebarColour": "rgb(24, 43, 75)",
+      "bottomItems": 0,
+      "drawerHidden": false,
+      "sidebarToggleVerified": true
     },
     {
       "view": "stride-mobile",
@@ -77,7 +92,10 @@
       "theme": "stride",
       "logoLoaded": true,
       "icons": 4,
-      "sidebarColour": "rgb(24, 43, 75)"
+      "sidebarColour": "rgb(24, 43, 75)",
+      "bottomItems": 5,
+      "drawerHidden": true,
+      "sidebarToggleVerified": true
     }
   ],
   "browserExceptions": 0,

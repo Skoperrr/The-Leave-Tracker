@@ -392,6 +392,91 @@ function mount(path: string) {
   return { ...ui, cache };
 }
 describe("Frontend integration flows", () => {
+  it("collapses and expands the desktop sidebar without changing organisation", async () => {
+    mount("/");
+    await screen.findByRole("heading", { name: "Hello, Ayanda." });
+    expect(
+      screen.getByRole("img", { name: "D-Lab header logo" }),
+    ).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Collapse sidebar" }),
+    );
+    expect(document.querySelector(".app-shell")).toHaveClass(
+      "sidebar-collapsed",
+    );
+    expect(
+      screen.getByRole("button", { name: "Expand sidebar" }),
+    ).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Expand sidebar" }),
+    );
+    expect(document.querySelector(".app-shell")).not.toHaveClass(
+      "sidebar-collapsed",
+    );
+    expect(document.querySelector(".app-shell")).toHaveAttribute(
+      "data-theme",
+      "dlab",
+    );
+  });
+  it.each([
+    ["EMPLOYEE", "Request leave", "/requests/new"],
+    ["MANAGER", "Leave approvals", "/manager"],
+    ["ADMIN", "Leave approvals", "/admin/approvals"],
+  ] as const)(
+    "uses the correct mobile centre action for %s",
+    async (role, label, path) => {
+      vi.stubGlobal("matchMedia", () => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+      profile.memberships = [{ ...dlab, role }];
+      mount("/");
+      const nav = await screen.findByRole("navigation", {
+        name: "Mobile navigation",
+      });
+      expect(within(nav).getAllByRole("link")).toHaveLength(4);
+      expect(within(nav).getByRole("link", { name: label })).toHaveAttribute(
+        "href",
+        path,
+      );
+      expect(within(nav).getByRole("link", { name: label })).toHaveClass(
+        "bottom-action",
+      );
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      await userEvent.click(within(nav).getByRole("button", { name: "More" }));
+      const panel = screen.getByRole("dialog", {
+        name: "Workspace navigation",
+      });
+      expect(panel).toHaveAttribute("aria-modal", "true");
+      expect(
+        within(panel).getByRole("button", { name: "Close navigation panel" }),
+      ).toHaveFocus();
+      await userEvent.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(within(nav).getByRole("button", { name: "More" })).toHaveFocus();
+      expect(document.body.style.overflow).not.toBe("hidden");
+    },
+  );
+  it("closes the mobile panel after organisation selection and updates the header logo", async () => {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    mount("/");
+    const opener = await screen.findByRole("button", {
+      name: "Open navigation panel",
+    });
+    await userEvent.click(opener);
+    await userEvent.selectOptions(
+      within(screen.getByRole("dialog")).getByLabelText("YOUR ORGANISATION"),
+      "org-field",
+    );
+    await screen.findByRole("img", { name: "The Field Institute header logo" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(document.querySelector(".workspace")).toHaveProperty("inert", false);
+  });
   it("uses explicit approval status filters and resets pagination", async () => {
     profile.memberships = [{ ...dlab, role: "ADMIN" }];
     requests = [{ ...createRequest("approved", dlab), status: "APPROVED" }];

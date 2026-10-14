@@ -6,6 +6,7 @@ export type NavIconName =
   | "approval"
   | "settings"
   | "admin";
+export type ShellIconName = "menu" | "close" | "collapse" | "expand";
 const paths: Record<NavIconName, string> = {
   overview: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
   request:
@@ -18,7 +19,13 @@ const paths: Record<NavIconName, string> = {
   settings: "M4 7h16 M4 17h16 M8 4v6 M16 14v6",
   admin: "M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7z M9 12l2 2 4-4",
 };
-export function NavIcon({ name }: { name: NavIconName }) {
+const shellPaths: Record<ShellIconName, string> = {
+  menu: "M4 6h16 M4 12h16 M4 18h16",
+  close: "m6 6 12 12 M6 18 18 6",
+  collapse: "M4 3h16v18H4z M9 3v18 M16 9l-3 3 3 3",
+  expand: "M4 3h16v18H4z M9 3v18 M13 9l3 3-3 3",
+};
+export function NavIcon({ name }: { name: NavIconName | ShellIconName }) {
   return (
     <svg
       className="nav-icon"
@@ -31,7 +38,13 @@ export function NavIcon({ name }: { name: NavIconName }) {
       aria-hidden="true"
       focusable="false"
     >
-      <path d={paths[name]} />
+      <path
+        d={
+          name in paths
+            ? paths[name as NavIconName]
+            : shellPaths[name as ShellIconName]
+        }
+      />
     </svg>
   );
 }

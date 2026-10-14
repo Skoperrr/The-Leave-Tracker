@@ -1,12 +1,8 @@
+import { WorkspaceShell } from "../layouts/AppLayout";
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { BalanceCards, UpcomingLeaveList } from "../components/DashboardCards";
 import { EmptyState, PageHeading } from "../components/ui";
 import { RequestCard } from "../components/RequestCard";
-import { Brand } from "../components/Brand";
-import { OrganisationBrand } from "../components/OrganisationBrand";
-import { NavIcon, type NavIconName } from "../components/NavIcon";
-import { getOrganisationTheme } from "../theme/organisations";
 import type { LeaveBalance, LeaveRequest, LeaveType } from "../types/api";
 
 // Visual fixtures only: this module is lazy-loaded behind import.meta.env.DEV.
@@ -127,130 +123,83 @@ export default function DashboardPreview() {
   const requests = requestsFor(org);
   const upcoming = requests.filter((request) => request.status === "APPROVED");
 
+  const previewMemberships = organisations.map((item) => ({
+    id: `preview-membership-${item.id}`,
+    organisationId: item.id,
+    organisationName: item.name,
+    role: "EMPLOYEE" as const,
+    managerMembershipId: null,
+    active: true,
+  }));
   return (
-    <div className="app-shell" data-theme={getOrganisationTheme(org.name).key}>
-      <a className="skip-link" href="#main">
-        Skip to content
-      </a>
-      <aside className="sidebar">
-        <Link
-          to="/preview/dashboard"
-          className="brand"
-          aria-label="The Leave Tracker dashboard preview"
-        >
-          <Brand />
-        </Link>
-        <div className="org-control">
-          <OrganisationBrand name={org.name} />
-          <label htmlFor="preview-organisation">PREVIEW ORGANISATION</label>
-          <select
-            id="preview-organisation"
-            value={org.id}
-            onChange={(event) => setSelected(event.target.value)}
-          >
-            {organisations.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          <span className="role-label">Employee preview</span>
-        </div>
-        <nav className="main-nav" aria-label="Preview navigation">
-          <a className="active" href="#main" aria-current="page">
-            <NavIcon name="overview" />
-            Overview
-          </a>
-          {(
-            [
-              ["Request leave", "request"],
-              ["My requests", "history"],
-              ["Team calendar", "calendar"],
-            ] as [string, NavIconName][]
-          ).map(([label, icon]) => (
-            <button className="preview-nav" key={label} type="button" disabled>
-              <NavIcon name={icon} />
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <p className="profile-name">Ayanda Example</p>
-          <p className="profile-email">Sample employee</p>
-          <Link className="secondary button" to="/sign-in">
-            Back to sign in
-          </Link>
-        </div>
-      </aside>
-      <div className="workspace">
-        <div className="topbar">
-          <span>{org.name}</span>
-          <span>Dashboard preview</span>
-        </div>
-        <main id="main" className="main-content" tabIndex={-1}>
-          <div className="notice preview-banner" role="status">
-            <strong>Sample data · Read-only preview</strong>
-            <p>
-              Explore the dashboard layout and switch between example
-              organisations. Balances and requests here are illustrative.
-            </p>
-          </div>
-          <PageHeading
-            eyebrow="YOUR TIME, AT A GLANCE"
-            title="Hello, Ayanda."
-            action={
-              <button className="primary" type="button" disabled>
-                + Request leave
-              </button>
-            }
-          >
-            Here's your leave at {org.name}.
-          </PageHeading>
-          <section aria-labelledby="balance-heading">
-            <div className="section-heading">
-              <h2 id="balance-heading">Leave balances</h2>
-              <span className="caption">2026 · Sample balances</span>
-            </div>
-            <BalanceCards balances={balances} leaveTypes={types} />
-            <p className="caption">
-              Example allocations: pending requests reserve days.
-            </p>
-          </section>
-          <section
-            className="upcoming panel"
-            aria-labelledby="upcoming-heading"
-          >
-            <div className="section-heading">
-              <h2 id="upcoming-heading">Your upcoming leave</h2>
-              <span className="caption">Approved · Sample data</span>
-            </div>
-            {upcoming.length ? (
-              <UpcomingLeaveList requests={upcoming} />
-            ) : (
-              <EmptyState title="Nothing on the horizon yet">
-                Approved time away appears here.
-              </EmptyState>
-            )}
-          </section>
-          <section id="preview-requests" aria-labelledby="recent-heading">
-            <div className="section-heading">
-              <h2 id="recent-heading">Your requests</h2>
-              <span className="caption">
-                Each organisation decides independently
-              </span>
-            </div>
-            <div className="request-list">
-              {requests.map((request) => (
-                <RequestCard key={request.id} request={request} />
-              ))}
-            </div>
-          </section>
-        </main>
-        <footer className="app-footer">
-          The Leave Tracker · {org.name}{" "}
-          <span>Development preview · Sample data</span>
-        </footer>
+    <WorkspaceShell
+      preview
+      me={{
+        id: "preview-user",
+        fullName: "Ayanda Example",
+        email: "",
+        memberships: previewMemberships,
+      }}
+      memberships={previewMemberships}
+      membership={previewMemberships.find(
+        (item) => item.organisationId === selected,
+      )!}
+      selectOrganisation={setSelected}
+    >
+      <div className="notice preview-banner" role="status">
+        <strong>Sample data · Read-only preview</strong>
+        <p>
+          Explore the dashboard layout and switch between example organisations.
+          Balances and requests here are illustrative.
+        </p>
       </div>
-    </div>
+      <PageHeading
+        eyebrow="YOUR TIME, AT A GLANCE"
+        title="Hello, Ayanda."
+        action={
+          <button className="primary" type="button" disabled>
+            + Request leave
+          </button>
+        }
+      >
+        Here's your leave at {org.name}.
+      </PageHeading>
+      <section aria-labelledby="balance-heading">
+        <div className="section-heading">
+          <h2 id="balance-heading">Leave balances</h2>
+          <span className="caption">2026 · Sample balances</span>
+        </div>
+        <BalanceCards balances={balances} leaveTypes={types} />
+        <p className="caption">
+          Example allocations: pending requests reserve days.
+        </p>
+      </section>
+      <section className="upcoming panel" aria-labelledby="upcoming-heading">
+        <div className="section-heading">
+          <h2 id="upcoming-heading">Your upcoming leave</h2>
+          <span className="caption">Approved · Sample data</span>
+        </div>
+        {upcoming.length ? (
+          <UpcomingLeaveList requests={upcoming} />
+        ) : (
+          <EmptyState title="Nothing on the horizon yet">
+            Approved time away appears here.
+          </EmptyState>
+        )}
+      </section>
+      <section id="preview-requests" aria-labelledby="recent-heading">
+        <div className="section-heading">
+          <h2 id="recent-heading">Your requests</h2>
+          <span className="caption">
+            Each organisation decides independently
+          </span>
+        </div>
+        <div className="request-list">
+          {requests.map((request) => (
+            <RequestCard key={request.id} request={request} />
+          ))}
+        </div>
+      </section>
+    </WorkspaceShell>
   );
 }

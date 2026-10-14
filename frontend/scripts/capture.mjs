@@ -132,7 +132,7 @@ try {
     if (!ready) throw new Error("The requested preview did not render.");
     if (themes) {
       await send("Runtime.evaluate", {
-        expression: `(() => { const select = document.querySelector('#preview-organisation'); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, 'preview-${view.theme}'); select.dispatchEvent(new Event('change', { bubbles: true })); })()`,
+        expression: `(() => { const select = document.querySelector('#organisation'); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, 'preview-${view.theme}'); select.dispatchEvent(new Event('change', { bubbles: true })); })()`,
       });
     }
     await send("Runtime.evaluate", {
@@ -149,7 +149,7 @@ try {
     const dimensions = result.result.value;
     if (themes) {
       const branding = await send("Runtime.evaluate", {
-        expression: `({ theme: document.querySelector('.app-shell').dataset.theme, logoLoaded: [...document.querySelectorAll('.institution-brand img')].every(img => img.complete && img.naturalWidth > 0), icons: document.querySelectorAll('.main-nav .nav-icon').length, sidebarColour: getComputedStyle(document.querySelector('.sidebar')).backgroundColor })`,
+        expression: `({ theme: document.querySelector('.app-shell').dataset.theme, logoLoaded: [...document.querySelectorAll('.institution-brand img, .header-logo img')].every(img => img.complete && img.naturalWidth > 0), icons: document.querySelectorAll('.main-nav .nav-icon').length, sidebarColour: getComputedStyle(document.querySelector('.sidebar')).backgroundColor, bottomItems: document.querySelector('.bottom-nav')?.children.length ?? 0, drawerHidden: getComputedStyle(document.querySelector('.sidebar')).visibility === 'hidden' })`,
         returnByValue: true,
       });
       Object.assign(dimensions, branding.result.value);
@@ -159,6 +159,11 @@ try {
         dimensions.icons !== 4
       )
         throw new Error("Theme branding did not render correctly.");
+      if (
+        view.mobile &&
+        (dimensions.bottomItems !== 5 || !dimensions.drawerHidden)
+      )
+        throw new Error("Mobile navigation did not render correctly.");
     }
     if (
       dimensions.viewportWidth !== view.width ||
@@ -175,7 +180,9 @@ try {
         x: 0,
         y: 0,
         width: view.width,
-        height: Math.max(view.height, metrics.cssContentSize.height),
+        height: view.mobile
+          ? view.height
+          : Math.max(view.height, metrics.cssContentSize.height),
         scale: 1,
       },
     });
@@ -183,6 +190,54 @@ try {
       resolve(output, `${screenshotName}-${view.name}.png`),
       Buffer.from(screenshot.data, "base64"),
     );
+    if (themes) {
+      await send("Runtime.evaluate", {
+        expression: "document.querySelector('.sidebar-toggle').click()",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const toggled = await send("Runtime.evaluate", {
+        expression: view.mobile
+          ? "Boolean(document.querySelector('.sidebar[role=dialog]') && document.querySelector('.workspace').inert && document.body.style.overflow === 'hidden' && document.activeElement === document.querySelector('.sidebar-close'))"
+          : "document.querySelector('.app-shell').classList.contains('sidebar-collapsed') && parseInt(getComputedStyle(document.querySelector('.sidebar')).width) === 80",
+        returnByValue: true,
+      });
+      if (!toggled.result.value)
+        throw new Error("Sidebar toggle did not behave correctly.");
+      dimensions.sidebarToggleVerified = true;
+      const panelScreenshot = await send("Page.captureScreenshot", {
+        format: "png",
+      });
+      await writeFile(
+        resolve(
+          output,
+          `${screenshotName}-${view.name}-${view.mobile ? "panel" : "collapsed"}.png`,
+        ),
+        Buffer.from(panelScreenshot.data, "base64"),
+      );
+      if (view.mobile) {
+        await send("Input.dispatchKeyEvent", {
+          type: "keyDown",
+          key: "Escape",
+          code: "Escape",
+        });
+        await send("Input.dispatchKeyEvent", {
+          type: "keyUp",
+          key: "Escape",
+          code: "Escape",
+        });
+      } else
+        await send("Runtime.evaluate", {
+          expression: "document.querySelector('.sidebar-toggle').click()",
+        });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const closed = await send("Runtime.evaluate", {
+        expression:
+          "!document.querySelector('.app-shell').classList.contains('panel-open') && !document.querySelector('.app-shell').classList.contains('sidebar-collapsed') && !document.querySelector('.workspace').inert",
+        returnByValue: true,
+      });
+      if (!closed.result.value)
+        throw new Error("Sidebar did not close/expand correctly.");
+    }
     evidence.push({ view: view.name, ...dimensions });
   }
   if (exceptions.length)
