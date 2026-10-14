@@ -914,3 +914,42 @@ describe("Handoff access and connection boundaries", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe("Organisation-wide approval calendar readiness", () => {
+  it("shows ready Google sync and organisation-only invitations before approval", async () => {
+    profile.memberships = [{ ...dlab, role: "ADMIN" }];
+    google.calendarId = "shared-calendar";
+    google.invitationsEnabled = true;
+    mount("/admin/approvals");
+    await screen.findByRole("heading", { name: "Organisation calendar ready" });
+    expect(
+      screen.getByText(
+        "Invitations are enabled for confirmed active members of this organisation only.",
+      ),
+    ).toBeInTheDocument();
+    expect(calls.some((call) => call.path.includes("/internal/"))).toBe(false);
+  });
+  it("keeps approvals usable when Google is not configured", async () => {
+    profile.memberships = [{ ...dlab, id: "admin-membership", role: "ADMIN" }];
+    failure = {
+      path: "/integrations/google/status",
+      status: 503,
+      code: "GOOGLE_NOT_CONFIGURED",
+    };
+    requests = [
+      {
+        ...createRequest("r-no-google", dlab),
+        employeeId: "other-profile",
+        employeeDisplayName: "Ayanda Example",
+      },
+    ];
+    mount("/admin/approvals");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Approve request" }),
+    );
+    await waitFor(() => expect(requests[0].status).toBe("APPROVED"));
+    expect(
+      screen.getByRole("link", { name: "Manage organisation calendar" }),
+    ).toHaveAttribute("href", "/admin/calendar");
+  });
+});

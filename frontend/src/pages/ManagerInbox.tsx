@@ -1,3 +1,4 @@
+import { ApprovalCalendarStatus } from "../components/ApprovalCalendarStatus";
 import { useState } from "react";
 import { useOrganisation } from "../auth/OrganizationProvider";
 import { api } from "../api/endpoints";
@@ -44,6 +45,7 @@ export function ManagerInbox() {
         Each organisation's decision is independent. You cannot approve your own
         leave.
       </PageHeading>
+      <ApprovalCalendarStatus />
       <div className="filters">
         <div>
           <label htmlFor="inbox-status">Status</label>

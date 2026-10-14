@@ -1,6 +1,6 @@
 # Setup for email signup and Google Calendar
 
-The backend is implemented and the additive database migrations have been applied. The frontend remains unchanged at your request; Kopano needs to add signup/profile bootstrap and the calendar settings page using [EMAIL_CALENDAR_BACKEND_HANDOFF.md](EMAIL_CALENDAR_BACKEND_HANDOFF.md). The hosted deployment must include these backend changes before the production callback can be used. Real Google connection, event creation and invitation receipts are not yet verified.
+The backend is implemented and the additive database migrations have been applied. The frontend implements signup/profile bootstrap, admin assignments and calendar settings from [EMAIL_CALENDAR_BACKEND_HANDOFF.md](EMAIL_CALENDAR_BACKEND_HANDOFF.md). The hosted deployment must include these backend changes before the production callback can be used. Real Google connection, event creation and invitation receipts are not yet verified.
 
 ## Email
 
@@ -23,7 +23,7 @@ A confirmed user first gets an empty profile. An organisation admin assigns EMPL
 5. Local server settings and generated encryption/scheduler keys have been prepared in ignored `backend/.env`, without displaying them. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET there privately. The helper `npm run calendar:configure` preserves existing nonempty values.
 6. In Vercel server environment variables, configure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GOOGLE_FRONTEND_RETURN_URL, GOOGLE_TOKEN_ENCRYPTION_KEY, GOOGLE_TOKEN_KEY_VERSION, GOOGLE_INVITATION_LIMIT and CRON_SECRET from that local file. Keep all credential/encryption/scheduler variables server-only. For confirmed recipient checking, SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY is required on the backend; never put it in Vite.
 7. Redeploy the backend after configuration. GOOGLE_FRONTEND_RETURN_URL initially uses `https://the-leave-tracker-skfc.vercel.app/admin`. Preserve your working FRONTEND_ORIGINS configuration. Leaving GOOGLE_CLIENT_ID blank disables calendar routes without disabling the core app; an incomplete configuration with a client ID fails startup with field names only.
-8. Through Kopano's future admin page, connect each organisation separately, list writable calendars, select its shared calendar, and run the read-only test. Only then enable invitations with consenting real members. Fictional example.com accounts are excluded from invitation delivery. Connections require actual browser consent by a Google account with write access.
+8. Through Administration → Calendar settings, connect each organisation separately, list writable calendars, select its shared calendar, and run the read-only test. Only then enable invitations with consenting real members. Fictional example.com accounts are excluded from invitation delivery. Connections require actual browser consent by a Google account with write access.
 
 External Google apps in Testing with Calendar permissions can have short-lived refresh grants. Reconnect when status says REAUTH_REQUIRED; mocked tests do not establish production consent/verification eligibility. Changing encryption keys requires keeping earlier versions in server-only GOOGLE_TOKEN_PREVIOUS_KEYS (JSON map of version to base64 key) until stored credentials are re-encrypted/reconnected; losing a key requires reconnection.
 
@@ -52,3 +52,25 @@ After the new backend deploys, open the app and sign in as Naledi. An admin must
 For D-Lab, run the contents of `backend/scripts/connect-calendar-in-browser.js` in that app page's browser console. This optional developer helper verifies the current ADMIN membership, fetches the connect URL in the same browser (including the HttpOnly nonce cookie), and opens Google consent. It does not modify frontend components or print credentials. Choose the real Google calendar owner account, grant Calendar permissions, and return to the app. A successful callback appends `calendarConnection=connected` to the admin return URL. If Google denies access, confirm the owner is an allowed test user and the exact Express callback is registered.
 
 After consent, GET /integrations/google/calendars returns writable calendars. Select D-Lab's shared calendar via PATCH /settings with invitationsEnabled=false for the first verification, then POST /test for a read-only permission check. Selecting a calendar queues upcoming approved leave; do not enable the scheduler until the chosen calendar is intentional. Change organisationName in the helper to connect The Field Institute or StrideShift Global separately. Real invitations still require consenting real confirmed members; fictional accounts are excluded.
+
+## Approved leave for everyone in an organisation
+
+Connect and select a distinct shared Google calendar for each organisation.
+In Calendar settings, explicitly enable invitations to confirmed active members
+and save. Each approval creates the internal all-day event and queues its Google
+copy atomically. The worker uses only that organisation's Google credentials,
+calendar and confirmed current member emails. A linked request's other
+organisation receives nothing until its own child request is approved.
+
+The approval screen shows whether the organisation calendar is ready and whether
+member invitations are enabled. Pending approvals and private reasons, leave
+types and comments are never included in Google events. Workers retry safely
+without duplicating events. The default recipient cap is 100; exceeding it
+creates the shared event without guests and shows INVITATION_RECIPIENT_LIMIT.
+
+Personal calendar appearance follows members' Google invitation preferences.
+An invitation may require an RSVP. Do not promise forced insertion into every
+personal calendar without calendar write access or claim email delivery from a
+successful API request. For guaranteed organisation-wide viewing through one
+calendar, the Google calendar owner must also grant the intended members access
+to that shared calendar through Google's sharing settings.

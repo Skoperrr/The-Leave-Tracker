@@ -96,7 +96,8 @@ describe('outbox worker (Google and database mocked)', () => {
   it('uses only the job organisation and filters unapproved recipient addresses', async () => {
     const fixture = workerFixture(); const result = await fixture.worker.run();
     expect(result.succeeded).toBe(1);
-    expect(fixture.members.mock.calls[0]).toBeDefined();
+    expect(fixture.members).toHaveBeenNthCalledWith(1, expect.objectContaining({ where: expect.objectContaining({ organisationId: org, active: true, user: { active: true } }) }));
+    expect(fixture.members).toHaveBeenNthCalledWith(2, expect.objectContaining({ where: expect.objectContaining({ organisationId: org, active: true, user: { active: true, email: { in: ['active@example.com'] } } }) }));
     const args = vi.mocked(fixture.provider.upsert).mock.calls[0]!;
     expect(args[0]).toBe('org-refresh'); expect(args[2].attendees).toEqual([{ email: 'active@example.com' }]);
     expect(fixture.externalUpsert).toHaveBeenCalled();

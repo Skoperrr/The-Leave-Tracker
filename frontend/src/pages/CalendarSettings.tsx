@@ -28,6 +28,8 @@ const invitationMessages: Record<string, string> = {
   PARTIAL_UNCONFIRMED:
     "Some recipients were excluded because their addresses could not be confirmed.",
   DISABLED: "Invitations are disabled.",
+  RECIPIENT_LIMIT:
+    "The recipient limit was exceeded. The shared event was created without invitations.",
   INVITATION_RECIPIENT_LIMIT:
     "The recipient limit was exceeded. The shared event was created without invitations.",
 };
@@ -109,8 +111,9 @@ export function CalendarSettings() {
   return (
     <>
       <PageHeading eyebrow="ORGANISATION INTEGRATIONS" title="Google Calendar">
-        Manage the shared calendar for {membership.organisationName}. Internal
-        leave and calendar features work independently of Google.
+        When leave is approved, queue an all-day event in{" "}
+        {membership.organisationName}'s shared Google calendar. Enable
+        invitations below to include its confirmed active members.
       </PageHeading>
       <CalendarConnectionBanner />
       {status.isPending ? (
@@ -224,9 +227,10 @@ export function CalendarSettings() {
                         organisation
                       </label>
                       <p className="muted">
-                        Invitations default off. Sync reports show recipient
-                        counts, never email addresses. A notification request
-                        does not guarantee delivery.
+                        Invitations default off. Members may need to accept the
+                        invitation before it appears on their personal Google
+                        calendar. Sync reports show recipient counts, never
+                        email addresses, and do not prove delivery.
                       </p>
                       <button
                         className="primary"
