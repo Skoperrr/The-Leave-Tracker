@@ -61,6 +61,8 @@ export function WorkspaceShell({
   const opener = useRef<HTMLElement | null>(null);
   const theme = getOrganisationTheme(membership.organisationName);
   const reviewer = membership.role === "ADMIN" || membership.role === "MANAGER";
+  const previewActive =
+    location.pathname === "/preview/calendar" ? "/calendar" : "/";
   const reviewPath =
     membership.role === "ADMIN" ? "/admin/approvals" : "/manager";
   const openPanel = () => {
@@ -146,7 +148,11 @@ export function WorkspaceShell({
     centre = false,
   ) =>
     preview ? (
-      <button className={centre ? "bottom-action" : ""} disabled type="button">
+      <button
+        className={`${centre ? "bottom-action" : ""}${path === previewActive ? " active" : ""}`}
+        disabled
+        type="button"
+      >
         <NavIcon name={icon} />
         <span>{label}</span>
       </button>
@@ -228,7 +234,7 @@ export function WorkspaceShell({
           {navigation.map((item) =>
             preview ? (
               <button
-                className={`preview-nav${item.path === "/" ? " active" : ""}`}
+                className={`preview-nav${item.path === previewActive ? " active" : ""}`}
                 key={item.path}
                 type="button"
                 disabled
@@ -255,7 +261,7 @@ export function WorkspaceShell({
         <div className="sidebar-footer">
           <p className="profile-name">{me.fullName}</p>
           <p className="profile-email">
-            {preview ? "Sample employee" : me.email}
+            {preview ? `Sample ${membership.role.toLowerCase()}` : me.email}
           </p>
           {preview ? (
             <NavLink className="secondary button" to="/sign-in">
@@ -299,7 +305,11 @@ export function WorkspaceShell({
             </span>
           </span>
           <span className="live-indicator">
-            {preview ? "Dashboard preview" : "Your leave workspace"}
+            {preview
+              ? previewActive === "/calendar"
+                ? "Calendar preview"
+                : "Dashboard preview"
+              : "Your leave workspace"}
           </span>
         </div>
         <main
@@ -335,15 +345,19 @@ export function WorkspaceShell({
             true,
           )}
           {bottomLink("/calendar", "Calendar", "calendar")}
-          <button
-            type="button"
-            onClick={openPanel}
-            aria-controls="workspace-sidebar"
-            aria-expanded={panelOpen}
-          >
-            <NavIcon name="menu" />
-            <span>More</span>
-          </button>
+          {membership.role === "ADMIN" ? (
+            bottomLink("/admin/calendar", "Calendar settings", "settings")
+          ) : (
+            <button
+              type="button"
+              onClick={openPanel}
+              aria-controls="workspace-sidebar"
+              aria-expanded={panelOpen}
+            >
+              <NavIcon name="menu" />
+              <span>Menu</span>
+            </button>
+          )}
         </nav>
       )}
     </div>

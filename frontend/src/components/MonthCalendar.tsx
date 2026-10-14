@@ -1,11 +1,15 @@
 import type { CalendarEvent } from "../types/api";
-import { formatDate, monthRange, parseDate } from "../hooks/dates";
+import { formatDate, monthRange, parseDate, today } from "../hooks/dates";
 export function MonthCalendar({
   month,
   events,
+  selectedDate,
+  onSelectDate,
 }: {
   month: string;
   events: CalendarEvent[];
+  selectedDate?: string;
+  onSelectDate?: (date: string) => void;
 }) {
   const { cells } = monthRange(month);
   const rows = Array.from({ length: cells.length / 7 }, (_, index) =>
@@ -37,11 +41,31 @@ export function MonthCalendar({
             {row.map((date, column) => (
               <td
                 key={date ?? `blank-${column}`}
-                className={date ? "" : "outside-month"}
+                className={
+                  !date
+                    ? "outside-month"
+                    : date === selectedDate
+                      ? "selected-day"
+                      : date === today()
+                        ? "today-cell"
+                        : ""
+                }
               >
                 {date && (
                   <>
-                    <time dateTime={date}>{Number(date.slice(8))}</time>
+                    {onSelectDate ? (
+                      <button
+                        className="calendar-day-button"
+                        type="button"
+                        aria-label={`View leave on ${formatDate(date)}`}
+                        aria-pressed={date === selectedDate}
+                        onClick={() => onSelectDate(date)}
+                      >
+                        <time dateTime={date}>{Number(date.slice(8))}</time>
+                      </button>
+                    ) : (
+                      <time dateTime={date}>{Number(date.slice(8))}</time>
+                    )}
                     <div className="day-events">
                       {events
                         .filter(

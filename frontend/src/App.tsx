@@ -69,6 +69,16 @@ export function App() {
           }
         />
       )}
+      {DashboardPreview && (
+        <Route
+          path="/preview/calendar"
+          element={
+            <Suspense fallback={<Loading label="Loading calendar preview" />}>
+              <DashboardPreview calendar />
+            </Suspense>
+          }
+        />
+      )}
       <Route path="/sign-in" element={<SignIn />} />
       <Route path="/sign-up" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

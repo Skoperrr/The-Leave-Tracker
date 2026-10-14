@@ -14,12 +14,25 @@ const browserPath = [
 if (!browserPath)
   throw new Error("Set KOPANO_BROWSER_EXE to an installed Chromium browser.");
 const themes = process.argv[2] === "themes";
+const calendar = themes && process.argv[3] === "calendar";
 const dashboard = themes || process.argv[2] === "dashboard";
-const route = dashboard ? "/preview/dashboard" : "/sign-in";
-const screenshotName = themes ? "theme" : dashboard ? "dashboard" : "sign-in";
-const readyExpression = dashboard
-  ? 'Boolean(document.querySelector(".preview-banner") && document.querySelector(".balance-number"))'
-  : 'Boolean(document.querySelector("#email") && document.querySelector("#password"))';
+const route = calendar
+  ? "/preview/calendar"
+  : dashboard
+    ? "/preview/dashboard"
+    : "/sign-in";
+const screenshotName = calendar
+  ? "calendar-theme"
+  : themes
+    ? "theme"
+    : dashboard
+      ? "dashboard"
+      : "sign-in";
+const readyExpression = calendar
+  ? 'Boolean(document.querySelector(".month-calendar"))'
+  : dashboard
+    ? 'Boolean(document.querySelector(".preview-banner") && document.querySelector(".balance-number"))'
+    : 'Boolean(document.querySelector("#email") && document.querySelector("#password"))';
 const url = `http://127.0.0.1:5173${route}`;
 if (!(await fetch(url)).ok)
   throw new Error("Start npm run dev before capturing screenshots.");
@@ -156,7 +169,7 @@ try {
       if (
         dimensions.theme !== view.theme ||
         !dimensions.logoLoaded ||
-        dimensions.icons !== 4
+        dimensions.icons !== (calendar ? 7 : 4)
       )
         throw new Error("Theme branding did not render correctly.");
       if (
@@ -246,7 +259,9 @@ try {
     resolve(
       output,
       themes
-        ? "theme-verification.json"
+        ? calendar
+          ? "calendar-theme-verification.json"
+          : "theme-verification.json"
         : dashboard
           ? "dashboard-verification.json"
           : "verification.json",

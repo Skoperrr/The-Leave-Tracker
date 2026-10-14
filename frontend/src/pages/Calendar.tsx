@@ -2,24 +2,14 @@ import { useState } from "react";
 import { useOrganisation } from "../auth/OrganizationProvider";
 import { api } from "../api/endpoints";
 import { useApiQuery } from "../hooks/queries";
-import {
-  today,
-  monthRange,
-  shiftMonth,
-  formatDate,
-  parseDate,
-} from "../hooks/dates";
-import {
-  EmptyState,
-  ErrorNotice,
-  Loading,
-  PageHeading,
-} from "../components/ui";
-import { MonthCalendar } from "../components/MonthCalendar";
+import { today, monthRange, shiftMonth, parseDate } from "../hooks/dates";
+import { ErrorNotice, Loading, PageHeading } from "../components/ui";
+import { CalendarWorkspace } from "../components/CalendarWorkspace";
 export function Calendar() {
   const { membership } = useOrganisation();
   const org = membership.organisationId;
   const [month, setMonth] = useState(today().slice(0, 7));
+  const [selectedDate, setSelectedDate] = useState(today());
   const { from, to } = monthRange(month);
   const events = useApiQuery(["calendar", org, from, to], (signal) =>
     api.calendar(org, from, to, signal),
@@ -53,7 +43,10 @@ export function Calendar() {
             <button
               type="button"
               className="secondary"
-              onClick={() => setMonth(today().slice(0, 7))}
+              onClick={() => {
+                setMonth(today().slice(0, 7));
+                setSelectedDate(today());
+              }}
             >
               Today
             </button>
@@ -89,34 +82,12 @@ export function Calendar() {
             }}
           />
         ) : (
-          <>
-            <MonthCalendar month={month} events={events.data.data} />
-            {events.data.data.length === 0 ? (
-              <EmptyState title="A clear calendar">
-                No approved leave overlaps this month.
-              </EmptyState>
-            ) : (
-              <section
-                className="calendar-agenda"
-                aria-labelledby="agenda-heading"
-              >
-                <h3 id="agenda-heading">Approved leave this month</h3>
-                <ul>
-                  {[...events.data.data]
-                    .sort((a, b) => a.startDate.localeCompare(b.startDate))
-                    .map((event) => (
-                      <li key={event.id}>
-                        <strong>{event.employeeDisplayName} — On leave</strong>
-                        <span>
-                          {formatDate(event.startDate)} —{" "}
-                          {formatDate(event.endDate)}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              </section>
-            )}
-          </>
+          <CalendarWorkspace
+            month={month}
+            events={events.data.data}
+            selectedDate={selectedDate.startsWith(month) ? selectedDate : from}
+            onSelectDate={setSelectedDate}
+          />
         )}
         <p className="caption">
           Each calendar belongs to one organisation. Date ranges include both

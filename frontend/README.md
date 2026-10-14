@@ -185,11 +185,11 @@ collapses the sidebar to an icon rail; expanding restores the organisation
 selector and profile controls.
 
 At widths up to 760px, the sidebar becomes a modal side panel opened from the
-header or **More** in the bottom navigation. It supports a close button,
+header or **Menu** in the bottom navigation. It supports a close button,
 backdrop dismissal, Escape, focus trapping/restoration and background scroll
 locking. Navigation and organisation changes close the panel. The bottom bar
 contains Overview, My requests, a raised circular centre action, Calendar and
-More. The centre action is Request leave for EMPLOYEE, or Leave approvals for
+Calendar settings for ADMIN (or Menu for other roles). The centre action is Request leave for EMPLOYEE, or Leave approvals for
 MANAGER (`/manager`) and ADMIN (`/admin/approvals`). Reviewers can still request
 their own leave from the side panel. Safe-area padding keeps the bar clear of
 mobile home indicators and keeps page content above it.
@@ -200,3 +200,25 @@ captures verify desktop collapse and mobile panel opening/closing, five bottom
 items, loaded header logos and no page overflow at 1440px and 390px. Additional
 `theme-*-mobile-panel.png` and `theme-*-desktop-collapsed.png` screenshots show the
 open panel and collapsed rail; preview actions remain read-only.
+
+## Slate workspace refinement
+
+All authenticated tabs use shared rounded slate surfaces, softly outlined inputs,
+icon badges and raised cards inspired by the supplied calendar reference.
+D-Lab retains navy/gold/green, Field retains black/cyan/yellow and StrideShift
+retains navy/cool blue. The calendar uses rounded day cells and a side agenda
+that stacks below the month on narrow screens. Selecting a date updates the
+count of approved leave and highlights matching agenda entries. Only public
+calendar name/date fields are rendered; no private leave reasons or types.
+
+On mobile, ADMIN's fifth navigation item opens `/admin/calendar` directly and
+is labelled Calendar settings. EMPLOYEE and MANAGER keep Menu, since the calendar
+integration API and settings page require ADMIN. Everyone can still open the
+side panel from the header; role-specific centre actions are preserved.
+
+Development-only `/preview/calendar` shows labelled sample data in all three
+themes. Capture the calendar using `npm run screenshots -- themes calendar`.
+[Calendar browser evidence](screenshots/calendar-theme-verification.json) and
+the corresponding `calendar-theme-*` screenshots include mobile admin navigation
+and desktop side agendas. Fixture tests verify the role-specific settings link,
+selected day counts and private-field exclusion.

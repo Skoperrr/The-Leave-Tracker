@@ -435,7 +435,20 @@ describe("Frontend integration flows", () => {
       const nav = await screen.findByRole("navigation", {
         name: "Mobile navigation",
       });
-      expect(within(nav).getAllByRole("link")).toHaveLength(4);
+      expect(within(nav).getAllByRole("link")).toHaveLength(
+        role === "ADMIN" ? 5 : 4,
+      );
+      if (role === "ADMIN") {
+        expect(
+          within(nav).getByRole("link", { name: "Calendar settings" }),
+        ).toHaveAttribute("href", "/admin/calendar");
+        expect(
+          within(nav).queryByRole("button", { name: "Menu" }),
+        ).not.toBeInTheDocument();
+      } else
+        expect(
+          within(nav).queryByRole("link", { name: "Calendar settings" }),
+        ).not.toBeInTheDocument();
       expect(within(nav).getByRole("link", { name: label })).toHaveAttribute(
         "href",
         path,
@@ -444,7 +457,9 @@ describe("Frontend integration flows", () => {
         "bottom-action",
       );
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      await userEvent.click(within(nav).getByRole("button", { name: "More" }));
+      await userEvent.click(
+        screen.getByRole("button", { name: "Open navigation panel" }),
+      );
       const panel = screen.getByRole("dialog", {
         name: "Workspace navigation",
       });
@@ -454,7 +469,9 @@ describe("Frontend integration flows", () => {
       ).toHaveFocus();
       await userEvent.keyboard("{Escape}");
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      expect(within(nav).getByRole("button", { name: "More" })).toHaveFocus();
+      expect(
+        screen.getByRole("button", { name: "Open navigation panel" }),
+      ).toHaveFocus();
       expect(document.body.style.overflow).not.toBe("hidden");
     },
   );
@@ -758,6 +775,13 @@ describe("Frontend integration flows", () => {
       target: { value: "2026-11" },
     });
     await screen.findByText("Ayanda Example — On leave");
+    await userEvent.click(
+      screen.getByRole("button", { name: "View leave on 02 Nov 2026" }),
+    );
+    expect(screen.getByText("1 person on approved leave")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "View leave on 02 Nov 2026" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("PRIVATE_REASON_123")).not.toBeInTheDocument();
     expect(screen.queryByText("Annual leave")).not.toBeInTheDocument();
     await waitFor(() =>
