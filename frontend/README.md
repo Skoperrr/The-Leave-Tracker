@@ -236,8 +236,14 @@ page headings have short entry animations, with no artificial network delay.
 `DominoSpinner` adapts the supplied Uiverse.io domino snippet by
 **satyamchaudharydev**, retaining eight staggered bars while removing its negative
 margin and fixed white colour. Page loaders follow the selected institution;
-the compact variant uses the sign-in button's text colour. Loading remains a
+the compact variant is available for inline controls. Sign-in uses a large,
+centred loader screen during session restoration and authentication. Loading remains a
 labelled live status; decorative bars are hidden from assistive technology.
 Reduced-motion preferences disable animations and transitions and show static
 loader bars. Browser captures verify eight bars, reduced-motion behaviour and
 no loader-induced page overflow.
+
+Sign-in includes an accessible Show/Hide password control. It changes only the
+input's visibility, preserves its value and autocomplete, and never submits
+the form. After a failed sign-in, entered fields remain available for retry.
+Tests cover visibility toggling, pending sign-in progress and failure recovery.

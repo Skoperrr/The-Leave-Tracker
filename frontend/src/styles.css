@@ -2556,3 +2556,73 @@ textarea[aria-invalid="true"] {
     flex-direction: row;
   }
 }
+
+/* Centred sign-in progress and password visibility control. */
+.signin-loading {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: radial-gradient(circle at center, #e7efdf 0, #f5f6f2 65%);
+  color: var(--green);
+}
+.signin-loading > .brand {
+  position: absolute;
+  top: 32px;
+  left: 32px;
+}
+.signin-loading-content {
+  text-align: center;
+  max-width: 100%;
+}
+.signin-loading-animation {
+  width: 280px;
+  max-width: 100%;
+  height: 145px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+}
+.signin-loading-animation .domino-spinner {
+  transform: scale(2.25);
+}
+.signin-loading-content h1 {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  letter-spacing: -0.6px;
+  margin-bottom: 12px;
+}
+.signin-loading-content p {
+  color: var(--muted);
+}
+.password-input {
+  position: relative;
+}
+.password-input input {
+  padding-right: 82px;
+}
+.password-visibility {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #eef3eb;
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.password-visibility:hover {
+  background: #dce9d2;
+}
+@media (max-width: 760px) {
+  .signin-loading > .brand {
+    top: 22px;
+    left: 22px;
+  }
+}

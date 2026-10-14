@@ -5,23 +5,40 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../auth/AuthProvider";
 import { supabase } from "../auth/supabase";
 import { signInSchema, type SignInValues } from "../hooks/validation";
-import {
-  DominoSpinner,
-  ErrorNotice,
-  FieldError,
-  Loading,
-} from "../components/ui";
+import { DominoSpinner, ErrorNotice, FieldError } from "../components/ui";
 import { Brand } from "../components/Brand";
+function SignInLoading({ label }: { label: string }) {
+  return (
+    <main className="signin-loading">
+      <div className="brand">
+        <Brand />
+      </div>
+      <div className="signin-loading-content" role="status" aria-live="polite">
+        <div className="signin-loading-animation">
+          <DominoSpinner />
+        </div>
+        <h1>{label}…</h1>
+        <p>Getting your workspace ready.</p>
+      </div>
+    </main>
+  );
+}
 export function SignIn() {
   const { session, loading, expired, authError, recovering } = useAuth();
   const location = useLocation();
   const [error, setError] = useState<unknown>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SignInValues>({ resolver: zodResolver(signInSchema) });
-  if (loading) return <Loading label="Restoring your session" />;
+  if (loading || isSubmitting)
+    return (
+      <SignInLoading
+        label={loading ? "Restoring your session" : "Signing in"}
+      />
+    );
   if (recovering) return <Navigate to="/reset-password" replace />;
   if (session) {
     const from = (location.state as { from?: string } | null)?.from;
@@ -103,14 +120,26 @@ export function SignIn() {
             />
             <FieldError id="email-error" message={errors.email?.message} />
             <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register("password")}
-              aria-invalid={Boolean(errors.password)}
-              aria-describedby="password-error"
-            />
+            <div className="password-input">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                {...register("password")}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby="password-error"
+              />
+              <button
+                type="button"
+                className="password-visibility"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-controls="password"
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
             <FieldError
               id="password-error"
               message={errors.password?.message}
@@ -119,14 +148,7 @@ export function SignIn() {
               className="primary full"
               disabled={!supabase || isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <DominoSpinner compact />
-                  Signing in…
-                </>
-              ) : (
-                "Sign in"
-              )}
+              Sign in
             </button>
           </form>
           <p className="signin-help">

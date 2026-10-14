@@ -392,6 +392,61 @@ function mount(path: string) {
   return { ...ui, cache };
 }
 describe("Frontend integration flows", () => {
+  it("shows and hides the sign-in password without submitting or changing its value", async () => {
+    auth.session = null;
+    mount("/sign-in");
+    const password = await screen.findByLabelText("Password");
+    await userEvent.type(password, "ExamplePassword123!");
+    expect(password).toHaveAttribute("type", "password");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Show password" }),
+    );
+    expect(password).toHaveAttribute("type", "text");
+    expect(password).toHaveValue("ExamplePassword123!");
+    expect(
+      screen.getByRole("button", { name: "Hide password" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Hide password" }),
+    );
+    expect(password).toHaveAttribute("type", "password");
+    expect(auth.signIn).not.toHaveBeenCalled();
+  });
+  it("shows centred sign-in progress while awaiting auth and restores inputs after failure", async () => {
+    auth.session = null;
+    let complete!: (result: { error: Error }) => void;
+    auth.signIn.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          complete = resolve;
+        }),
+    );
+    mount("/sign-in");
+    await userEvent.type(
+      await screen.findByLabelText("Email address"),
+      "employee@example.test",
+    );
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(
+      await screen.findByRole("heading", { name: "Signing in…" }),
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector(".signin-loading-animation .domino-spinner"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Sign in" }),
+    ).not.toBeInTheDocument();
+    await act(async () => {
+      complete({ error: new Error("Invalid login credentials") });
+    });
+    await screen.findByText("Invalid login credentials");
+    expect(screen.getByLabelText("Email address")).toHaveValue(
+      "employee@example.test",
+    );
+    expect(screen.getByLabelText("Password")).toHaveValue("password123");
+    expect(auth.signIn).toHaveBeenCalledOnce();
+  });
   it("collapses and expands the desktop sidebar without changing organisation", async () => {
     mount("/");
     await screen.findByRole("heading", { name: "Hello, Ayanda." });
