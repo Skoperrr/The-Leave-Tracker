@@ -178,6 +178,20 @@ beforeEach(() => {
           { status: failure.status },
         );
       if (path === "/me") return response(profile);
+      if (path === "/ai/leave-draft")
+        return response({
+          referenceDate: "2026-10-15",
+          timezone: "Africa/Johannesburg",
+          status: "READY",
+          draft: {
+            organisationIds: body.organisationIds,
+            leaveTypeCode: "ANNUAL",
+            startDate: "2026-10-22",
+            endDate: "2026-10-23",
+          },
+          workingDays: 2,
+          warnings: ["Balances and overlaps are checked on submission."],
+        });
       const orgId = url.searchParams.get("organisationId");
       if (path.endsWith("/leave-types")) {
         const org = path.split("/")[2];
@@ -712,6 +726,51 @@ describe("Frontend integration flows", () => {
     });
     expect(screen.getAllByText("Pending")).toHaveLength(2);
     expect(screen.getAllByText("5 working days")).toHaveLength(2);
+  });
+  it("keeps AI generation and applying read-only until explicit leave submission, preserving the private reason", async () => {
+    const user = userEvent.setup();
+    mount("/requests/new");
+    await screen.findByRole("heading", { name: "Request leave" });
+    await user.type(
+      screen.getByLabelText(/Private reason/),
+      "Keep this private reason",
+    );
+    await user.type(
+      screen.getByLabelText("What leave would you like?"),
+      "Annual leave from 22 October 2026 to 23 October 2026",
+    );
+    await user.click(screen.getByRole("button", { name: "Generate draft" }));
+    await screen.findByText("AI suggestion — review before submitting");
+    expect(
+      calls.filter(
+        (call) => call.path === "/leave-requests" && call.method === "POST",
+      ),
+    ).toHaveLength(0);
+    const aiCall = calls.find((call) => call.path === "/ai/leave-draft");
+    expect(aiCall?.body).toEqual({
+      organisationIds: ["org-dlab"],
+      text: "Annual leave from 22 October 2026 to 23 October 2026",
+    });
+    await user.click(screen.getByRole("button", { name: "Use these details" }));
+    expect(screen.getByLabelText("Start date")).toHaveValue("2026-10-22");
+    expect(screen.getByLabelText("End date")).toHaveValue("2026-10-23");
+    expect(screen.getByLabelText(/Private reason/)).toHaveValue(
+      "Keep this private reason",
+    );
+    expect(
+      calls.filter(
+        (call) => call.path === "/leave-requests" && call.method === "POST",
+      ),
+    ).toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: "Submit request" }));
+    await screen.findByRole("heading", {
+      name: "Your time away is on its way.",
+    });
+    expect(
+      calls.filter(
+        (call) => call.path === "/leave-requests" && call.method === "POST",
+      ),
+    ).toHaveLength(1);
   });
   it("cancels only the selected child and refetches organisation requests", async () => {
     requests = [createRequest("r-dlab", dlab), createRequest("r-field", field)];

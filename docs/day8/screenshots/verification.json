@@ -1,0 +1,48 @@
+{
+  "views": [
+    {
+      "name": "dlab-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "dlab",
+      "reviewVisible": true
+    },
+    {
+      "name": "dlab-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "dlab",
+      "reviewVisible": true
+    },
+    {
+      "name": "field-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "field",
+      "reviewVisible": true
+    },
+    {
+      "name": "field-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "field",
+      "reviewVisible": true
+    },
+    {
+      "name": "stride-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "stride",
+      "reviewVisible": true
+    },
+    {
+      "name": "stride-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "stride",
+      "reviewVisible": true
+    }
+  ],
+  "browserExceptions": 0,
+  "note": "Simulated auth/API responses; no actual leave mutation."
+}

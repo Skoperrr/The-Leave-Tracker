@@ -6,6 +6,56 @@ info:
 servers:
   - url: http://localhost:3001/api/v1
 paths:
+  "/ai/leave-draft":
+    post:
+      operationId: generateLeaveDraft
+      summary: Generate a read-only Gemini suggestion; human confirmation and ordinary submission are required
+      description: Checks all active organisation memberships before Gemini access. Uses Africa/Johannesburg date context. Makes no business writes, reserves no leave and does not send invitations. Missing Gemini configuration affects only this feature. Balances and overlaps are checked by the ordinary leave submission endpoint, not this preview.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [organisationIds, text]
+              properties:
+                organisationIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  uniqueItems: true
+                  items: {type: string, format: uuid}
+                text: {type: string, minLength: 1, maxLength: 1000}
+      responses:
+        '200':
+          description: Validated suggestion or clarification; nothing has been saved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    oneOf:
+                    - "$ref": "#/components/schemas/AiReadyDraft"
+                    - "$ref": "#/components/schemas/AiClarification"
+        '400':
+          "$ref": "#/components/responses/InvalidInput"
+        '401':
+          "$ref": "#/components/responses/Unauthenticated"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '422':
+          description: AI_INVALID_OUTPUT; malformed or unsupported provider proposal
+        '429':
+          description: AI_RATE_LIMITED; local limiter or Gemini quota exhausted; use manual form
+        '503':
+          description: AI_NOT_CONFIGURED or AI_UNAVAILABLE; manual requests remain available
+        '504':
+          description: AI_TIMEOUT; no automatic retry or alternate model
   "/auth/profile":
     post:
       operationId: provisionConfirmedEmailProfile
@@ -1012,6 +1062,40 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    AiReadyDraft:
+      type: object
+      required: [status, referenceDate, timezone, draft, workingDays, warnings]
+      properties:
+        status: {type: string, enum: [READY]}
+        referenceDate: {type: string, format: date}
+        timezone: {type: string, enum: [Africa/Johannesburg]}
+        draft:
+          type: object
+          required: [organisationIds, leaveTypeCode, startDate, endDate]
+          properties:
+            organisationIds:
+              type: array
+              items: {type: string, format: uuid}
+            leaveTypeCode: {type: string}
+            startDate: {type: string, format: date}
+            endDate: {type: string, format: date}
+        workingDays: {type: integer, minimum: 1}
+        warnings:
+          type: array
+          items: {type: string}
+    AiClarification:
+      type: object
+      required: [status, referenceDate, timezone, draft, questions]
+      properties:
+        status: {type: string, enum: [NEEDS_CLARIFICATION]}
+        referenceDate: {type: string, format: date}
+        timezone: {type: string, enum: [Africa/Johannesburg]}
+        draft: {type: object, nullable: true, enum: [null]}
+        questions:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items: {type: string}
     AdminAllocation:
       type: object
       additionalProperties: false

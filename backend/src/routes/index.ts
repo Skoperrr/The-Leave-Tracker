@@ -11,6 +11,7 @@ import { balanceQuery, createLeaveBody, historyQuery, requestIdParams } from '..
 import { managerQuery, calendarQuery } from '../validators/manager.js';
 import { managerControllers } from '../controllers/manager.js';
 import { createCalendarRouter } from './calendar.js';
+import { createAiRouter } from './ai.js';
 
 export function createApiRouter(services?: AccessServices) {
   const router = Router();
@@ -24,6 +25,7 @@ export function createApiRouter(services?: AccessServices) {
     res.json({ data: await services.onboarding.profile(token, (res.locals.validated as { fullName: string }).fullName) });
   });
   router.use(authenticate(services));
+  router.use(createAiRouter(services));
   router.get('/me', getMe);
   router.get('/organisations', getOrganisations);
   router.get('/organisations/:orgId/leave-types', validate(z.object({ orgId: z.uuid() }), 'params'), getLeaveTypes(services));

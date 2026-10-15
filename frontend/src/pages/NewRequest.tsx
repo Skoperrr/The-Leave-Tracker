@@ -16,6 +16,7 @@ import {
   PageHeading,
 } from "../components/ui";
 import { RequestCard } from "../components/RequestCard";
+import { AiLeaveDraft } from "../components/AiLeaveDraft";
 export function NewRequest() {
   const { session } = useAuth();
   const { membership, memberships } = useOrganisation();
@@ -25,6 +26,7 @@ export function NewRequest() {
     handleSubmit,
     watch,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<RequestValues>({
     resolver: zodResolver(requestSchema),
@@ -146,6 +148,28 @@ export function NewRequest() {
                 message={errors.organisationIds?.message}
               />
             </fieldset>
+            <AiLeaveDraft
+              key={membership.id}
+              organisationIds={ids}
+              organisations={memberships}
+              leaveTypes={sharedTypes}
+              formRevision={`${code}|${start}|${end}`}
+              disabled={mutation.isPending || loading || Boolean(typeError)}
+              onApply={({ draft }) => {
+                setValue("leaveTypeCode", draft.leaveTypeCode, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                setValue("startDate", draft.startDate, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                setValue("endDate", draft.endDate, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              }}
+            />
             <label htmlFor="leave-type">Leave type</label>
             <select
               id="leave-type"
