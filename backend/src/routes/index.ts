@@ -1,3 +1,4 @@
+import { createInsightsRouter } from './insights.js';
 import { Router } from 'express';
 import { getHealth } from '../controllers/health.js';
 import { z } from 'zod';
@@ -25,6 +26,7 @@ export function createApiRouter(services?: AccessServices) {
     res.json({ data: await services.onboarding.profile(token, (res.locals.validated as { fullName: string }).fullName) });
   });
   router.use(authenticate(services));
+  router.use(createInsightsRouter(services));
   router.use(createAiRouter(services));
   router.get('/me', getMe);
   router.get('/organisations', getOrganisations);

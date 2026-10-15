@@ -1,3 +1,5 @@
+import { createInsightsRepository } from './repositories/insights.js';
+import { createInsightsService } from './services/insights.js';
 import { createCalendarRuntime } from './services/calendar-runtime.js';
 import { createOnboardingService } from './services/onboarding.js';
 import { createApp } from './application.js';
@@ -26,6 +28,7 @@ async function start() {
     ...createAiRuntime(database),
     leave: createLeaveService(createLeaveRepository(database)), manager: createManagerService(createLeaveRepository(database)),
     admin: createAdminService(createLeaveRepository(database)),
+    insights: createInsightsService(createInsightsRepository(database)),
     onboarding: createOnboardingService(database, createConfirmedIdentityVerifier(configuration)) };
   const server = createApp(environment, services).listen(environment.PORT, () => {
     console.info(`Leave Tracker API listening on port ${environment.PORT}`);

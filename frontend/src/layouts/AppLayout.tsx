@@ -128,7 +128,10 @@ export function WorkspaceShell({
     { path: "/requests", label: "My requests", icon: "history", end: true },
     { path: "/calendar", label: "Team calendar", icon: "calendar" },
     ...(reviewer
-      ? [{ path: reviewPath, label: "Leave approvals", icon: "approval" }]
+      ? [
+          { path: reviewPath, label: "Leave approvals", icon: "approval" },
+          { path: "/insights", label: "Insights", icon: "overview" },
+        ]
       : []),
     ...(membership.role === "ADMIN"
       ? [
