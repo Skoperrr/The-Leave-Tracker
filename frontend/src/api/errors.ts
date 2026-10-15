@@ -1,4 +1,13 @@
 const messages: Record<string, string> = {
+  AI_UNAVAILABLE:
+    "Gemini is temporarily unavailable. Try again later; your normal leave tools still work.",
+  AI_NOT_CONFIGURED:
+    "AI tools are not configured yet. Your normal leave tools still work.",
+  AI_RATE_LIMITED:
+    "The AI quota is busy or exhausted. Wait before trying again; your normal leave tools still work.",
+  AI_TIMEOUT: "Gemini took too long. Try again or use the normal leave tools.",
+  AI_DATA_LIMIT:
+    "There are too many records to summarise. Choose a narrower date range.",
   EMAIL_CONFIRMATION_REQUIRED:
     "Confirm your email before opening your workspace.",
   PROFILE_CONFLICT:

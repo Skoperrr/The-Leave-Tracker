@@ -1,11 +1,85 @@
 openapi: 3.0.3
 info:
   title: The Leave Tracker API
-  version: 0.6.0
-  description: Email onboarding, scoped employee assignment, leave workflows and Google Calendar OAuth/outbox. Google sign-in is deferred; frontend integration and live Google consent remain to be completed.
+  version: 0.7.0
+  description: Email onboarding, scoped leave workflows, Google Calendar OAuth/outbox and three Gemini tools (leave drafting, manager review summaries and scoped data questions). AI tools never create or decide leave automatically.
 servers:
   - url: http://localhost:3001/api/v1
 paths:
+  "/ai/manager-summary":
+    post:
+      operationId: generateManagerReviewSummary
+      summary: Read-only manager/admin summary with grounded flags and source requests
+      description: Direct reports for MANAGER, organisation review scope for ADMIN; active members only, excluding the actor. Weekday coverage flags use a 30 percent planning threshold and include pending leave only as a projection. No actual staffing roster is available. Gemini prioritises up to 40 anonymous facts; the server supplies all prose, names, figures and source IDs. All computed attention flags are returned. Default period is today through 30 days later in Africa/Johannesburg; maximum 93 calendar days. More than 500 requests or 1000 reviewable members returns AI_DATA_LIMIT rather than a partial report.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [organisationId]
+              properties:
+                organisationId: {type: string, format: uuid}
+                from: {type: string, format: date, description: Supply both from and to or neither}
+                to: {type: string, format: date}
+      responses:
+        '200':
+          description: Server-calculated summary and optionally AI-prioritised highlights; no business writes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: {$ref: '#/components/schemas/AiManagerSummary'}
+        '400': {$ref: '#/components/responses/InvalidInput'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {description: AI_INVALID_OUTPUT or AI_DATA_LIMIT}
+        '429': {description: AI_RATE_LIMITED}
+        '503': {description: AI_NOT_CONFIGURED or AI_UNAVAILABLE}
+        '504': {description: AI_TIMEOUT}
+  "/ai/ask-data":
+    post:
+      operationId: askScopedLeaveData
+      summary: Classify a natural-language question and answer with authorised database records
+      description: Supported intents are WHO_OFF, COUNT_OFF, PENDING_REQUESTS and MY_BALANCE. Calendar answers use only active approved organisation-visible events. Pending requests require MANAGER/ADMIN and the same review scope as manager summaries. Balances always belong to the verified actor. Unsupported/private/mutation questions return clarification; the model cannot produce SQL. Query windows are bounded to 93 days. The response includes dates, generation timestamp, scope and source rows. Duplicate display names are not treated as the same employee. All endpoints use a shared instance-local AI limiter.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [organisationId, question]
+              properties:
+                organisationId: {type: string, format: uuid}
+                question: {type: string, minLength: 1, maxLength: 500}
+      responses:
+        '200':
+          description: Real-data answer or clarification; no business writes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    oneOf:
+                    - {$ref: '#/components/schemas/AiDataAnswer'}
+                    - {$ref: '#/components/schemas/AiToolClarification'}
+        '400': {$ref: '#/components/responses/InvalidInput'}
+        '401': {$ref: '#/components/responses/Unauthenticated'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '422': {description: AI_INVALID_OUTPUT or AI_DATA_LIMIT}
+        '429': {description: AI_RATE_LIMITED}
+        '503': {description: AI_NOT_CONFIGURED or AI_UNAVAILABLE}
+        '504': {description: AI_TIMEOUT}
   "/ai/leave-draft":
     post:
       operationId: generateLeaveDraft
@@ -1062,6 +1136,103 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    AiToolFact:
+      type: object
+      required: [id, kind, text, requestIds, date]
+      properties:
+        id: {type: string}
+        kind: {type: string, enum: [OVERVIEW, CLASH, COVERAGE, WAITING, PAST_START]}
+        text: {type: string, description: Canonical server-generated prose from real scoped records}
+        requestIds: {type: array, items: {type: string, format: uuid}}
+        date: {type: string, format: date, nullable: true}
+    AiToolSource:
+      type: object
+      description: A reviewer source uses id; an approved calendar source uses requestId. Never includes private reasons or decision comments.
+      required: [employeeDisplayName, startDate, endDate]
+      properties:
+        id: {type: string, format: uuid}
+        requestId: {type: string, format: uuid}
+        employeeDisplayName: {type: string}
+        startDate: {type: string, format: date}
+        endDate: {type: string, format: date}
+        status: {type: string, enum: [PENDING, APPROVED]}
+    AiManagerSummary:
+      type: object
+      required: [referenceDate, generatedAt, timezone, period, scope, activeMemberCount, pendingCount, approvedCount, summary, highlights, attention, dailyCoverage, sources, aiUsed, coverageThresholdPercent, limitations]
+      properties:
+        referenceDate: {type: string, format: date}
+        generatedAt: {type: string, format: date-time}
+        timezone: {type: string, enum: [Africa/Johannesburg]}
+        period:
+          type: object
+          properties:
+            from: {type: string, format: date}
+            to: {type: string, format: date}
+        scope: {type: string, enum: [ORGANISATION_REVIEW, DIRECT_REPORTS]}
+        activeMemberCount: {type: integer, minimum: 0}
+        pendingCount: {type: integer, minimum: 0}
+        approvedCount: {type: integer, minimum: 0}
+        summary: {type: string}
+        highlights: {type: array, items: {$ref: '#/components/schemas/AiToolFact'}}
+        attention: {type: array, items: {$ref: '#/components/schemas/AiToolFact'}}
+        sources: {type: array, items: {$ref: '#/components/schemas/AiToolSource'}}
+        aiUsed: {type: boolean, description: False when there are no attention facts to prioritise}
+        coverageThresholdPercent: {type: integer, enum: [30]}
+        limitations: {type: array, items: {type: string}}
+        dailyCoverage:
+          type: array
+          items:
+            type: object
+            properties:
+              date: {type: string, format: date}
+              approvedPeople: {type: integer}
+              projectedPeople: {type: integer}
+              approvedPercent: {type: number}
+              projectedPercent: {type: number}
+              warning: {type: boolean}
+    AiToolClarification:
+      type: object
+      required: [status, referenceDate, generatedAt, timezone, questions]
+      properties:
+        status: {type: string, enum: [NEEDS_CLARIFICATION]}
+        referenceDate: {type: string, format: date}
+        generatedAt: {type: string, format: date-time}
+        timezone: {type: string, enum: [Africa/Johannesburg]}
+        questions: {type: array, items: {type: string}, minItems: 1}
+    AiDataAnswer:
+      type: object
+      required: [status, intent, scope, answer, referenceDate, generatedAt, timezone, rows, balances]
+      properties:
+        status: {type: string, enum: [ANSWER]}
+        intent: {type: string, enum: [WHO_OFF, COUNT_OFF, PENDING_REQUESTS, MY_BALANCE]}
+        scope: {type: string, enum: [ORGANISATION_CALENDAR, ORGANISATION_REVIEW, DIRECT_REPORTS, OWN_BALANCE]}
+        answer: {type: string, description: Server-generated text using actual query results}
+        referenceDate: {type: string, format: date}
+        generatedAt: {type: string, format: date-time}
+        timezone: {type: string, enum: [Africa/Johannesburg]}
+        year: {type: integer}
+        period:
+          type: object
+          nullable: true
+          properties:
+            from: {type: string, format: date}
+            to: {type: string, format: date}
+        interpretation: {type: string}
+        limitations: {type: array, items: {type: string}}
+        peopleCount: {type: integer, description: Distinct members, not distinct display names}
+        requestCount: {type: integer}
+        rows: {type: array, items: {$ref: '#/components/schemas/AiToolSource'}}
+        balances:
+          type: array
+          items:
+            type: object
+            properties:
+              leaveTypeName: {type: string}
+              year: {type: integer}
+              allocatedDays: {type: number}
+              approvedDays: {type: number}
+              pendingDays: {type: number}
+              remainingDays: {type: number}
     AiReadyDraft:
       type: object
       required: [status, referenceDate, timezone, draft, workingDays, warnings]

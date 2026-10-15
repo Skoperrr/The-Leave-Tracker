@@ -16,7 +16,11 @@ The brief permits choosing among several AI capabilities. **This specification s
 
 This document authorises planning for implementation; it does not mean those features already exist or that the PDF's submission instructions have been carried out.
 
+**User clarification, 15 October 2026:** infer omitted years from the current Africa/Johannesburg date. “Tomorrow” means the next calendar day; “next week”, “next whole week” and “next the whole week” mean Monday–Friday of the following calendar week. On 15 October 2026 these resolve to 16 October and 19–23 October respectively. This supersedes the original requirement below to clarify merely because a year was omitted. Continue clarifying a missing leave type or genuinely ambiguous dates, show the interpretation before submission, and preserve the same-year/weekday policy.
+
 ## 2. Shared Day 8 agreement — both models must read
+
+**Further user scope update, 15 October 2026:** implement all three Intelligence examples: natural-language requests, manager assistant and Ask the data. The original “stretch work” ordering is superseded by this explicit request. Their implemented boundaries and additional endpoints are documented in [AI_FEATURES.md](AI_FEATURES.md). “Next Thursday and Friday” now resolves to those weekdays in the following calendar week with displayed interpretation; only genuinely ambiguous/non-contiguous qualifiers still require date clarification. Kopano's Insights ownership remains unchanged.
 
 Read this document **and** Kopano's specification before editing. The user's Day 8 pillar allocation supersedes historical documents assigning all frontend work to Kopano and all backend work to Victor. Preserve existing product behaviour and organisation themes.
 

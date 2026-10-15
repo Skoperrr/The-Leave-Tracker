@@ -12,6 +12,7 @@ import {
 } from "../hooks/dates";
 import { ErrorNotice, Loading, PageHeading } from "../components/ui";
 import { CalendarWorkspace } from "../components/CalendarWorkspace";
+import { AskLeaveData } from "../components/AskLeaveData";
 export function Calendar() {
   const { membership } = useOrganisation();
   const org = membership.organisationId;
@@ -40,6 +41,7 @@ export function Calendar() {
         Approved time away at {membership.organisationName}. Private reasons
         stay private.
       </PageHeading>
+      <AskLeaveData key={membership.id} />
       <section
         className="panel calendar-panel"
         aria-label="Organisation leave calendar"

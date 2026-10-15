@@ -97,7 +97,7 @@ describe("AI draft review interaction (mock API)", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Generate draft" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Use the manual form",
+      "normal leave tools still work",
     );
     expect(screen.getByLabelText("What leave would you like?")).toHaveValue(
       "Annual leave tomorrow",

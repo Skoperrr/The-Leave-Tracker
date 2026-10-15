@@ -14,13 +14,13 @@ const account: Account = { id: 'employee', email: 'employee@example.invalid', fu
   memberships: [org, other].map(organisationId => ({ id: `member-${organisationId}`, organisationId, organisationName: 'Test org',
     organisationSlug: 'test', role: 'EMPLOYEE' as const, managerMembershipId: null, active: true })) };
 
-function setup(output: unknown = ready) {
+function setup(output: unknown = ready, instant = '2026-10-14T22:30:00Z') {
   const provider = vi.fn(async () => output);
   const repository = { findAccount: vi.fn(async () => account), listLeaveTypes: vi.fn(async (organisationId: string) => [
     { id: 'annual', organisationId, code: 'ANNUAL', name: 'Annual leave' },
   ]) };
   // Deliberately no write-capable dependency is provided to the draft service.
-  const ai = createAiLeaveDraftService(repository, provider, () => new Date('2026-10-14T22:30:00Z'));
+  const ai = createAiLeaveDraftService(repository, provider, () => new Date(instant));
   const app = createApp(readEnvironment({ NODE_ENV: 'test' }), { repository, ai, verifyToken: async token => token === 'valid' ? account.id : null });
   const post = (body: object = input) => request(app).post('/api/v1/ai/leave-draft').set('Authorization', 'Bearer valid').send(body);
   return { app, provider, repository, ai, post };
@@ -45,20 +45,70 @@ describe('AI draft route and validation (mock provider, no persistence)', () => 
     expect(response.body.data.status).toBe('NEEDS_CLARIFICATION');
     expect(provider).not.toHaveBeenCalled();
   });
-  it.each(['I need a few days off soon', 'Annual leave next Thursday and Friday', 'Half-day annual leave on 22 October 2026', 'Annual leave on 22 October 2026 and 26 October 2026'])('clarifies unsupported or ambiguous input: %s', async text => {
+  it.each(['I need a few days off soon', 'Half-day annual leave on 22 October 2026', 'Annual leave on 22 October 2026 and 26 October 2026', 'Annual leave next Thursday and Monday'])('clarifies unsupported or ambiguous input: %s', async text => {
     const { post, provider } = setup();
     const response = await post({ ...input, text });
     expect(response.status).toBe(200);
     expect(response.body.data).toMatchObject({ status: 'NEEDS_CLARIFICATION', draft: null });
     expect(provider).not.toHaveBeenCalled();
   });
+  it('structures next Thursday and Friday as 22–23 October 2026 for confirmation', async () => {
+    const response = await setup().post({ ...input, text: 'Annual leave next Thursday and Friday' });
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({ status: 'READY', workingDays: 2, draft: ready.draft });
+    expect(response.body.data.warnings.join(' ')).toContain('following calendar week');
+  });
   it('passes through valid provider clarification rather than creating a guessed draft', async () => {
     const { post } = setup({ status: 'NEEDS_CLARIFICATION', draft: null, questions: ['Which exact dates and year?'] });
     expect((await post({ ...input, text: 'I want annual leave' })).body.data).toMatchObject({ status: 'NEEDS_CLARIFICATION', draft: null });
   });
-  it.each(['Leave from 22 October 2026 to 23 October 2026', 'Annual leave from 22 October to 23 October'])('does not trust a provider that invents a missing type or year', async text => {
+  it.each(['Leave from 22 October 2026 to 23 October 2026'])('does not trust a provider that invents a missing type', async text => {
     const { post } = setup();
     expect((await post({ ...input, text })).body.data.status).toBe('NEEDS_CLARIFICATION');
+  });
+  it('infers the current year for named dates without requiring the user to repeat it', async () => {
+    const response = await setup().post({ ...input, text: 'Annual leave from 22 October to 23 October' });
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({ status: 'READY', workingDays: 2, draft: ready.draft });
+    expect(response.body.data.warnings.join(' ')).toContain('current year, 2026');
+  });
+  it.each(['Annual leave next week', 'Annual leave next whole week', 'Annual leave next the whole week'])('resolves %s to the next Monday–Friday and overrides incorrect model dates', async text => {
+    const { post, provider } = setup();
+    const response = await post({ ...input, text });
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({ status: 'READY', workingDays: 5,
+      draft: { startDate: '2026-10-19', endDate: '2026-10-23' } });
+    expect(response.body.data.warnings.join(' ')).toContain('Monday 2026-10-19 through Friday 2026-10-23');
+    expect(provider).toHaveBeenCalledWith(expect.objectContaining({ dateInterpretation: expect.objectContaining({ startDate: '2026-10-19', endDate: '2026-10-23' }) }));
+  });
+  it('resolves tomorrow to 16 October 2026 using Johannesburg, even if model dates are wrong', async () => {
+    const annual = await setup().post({ ...input, text: 'Annual leave tomorrow' });
+    expect(annual.body.data).toMatchObject({ status: 'READY', workingDays: 1,
+      referenceDate: '2026-10-15', draft: { startDate: '2026-10-16', endDate: '2026-10-16' } });
+  });
+  it('understands tomorrow even when a leave type is still needed', async () => {
+    const { post } = setup({ status: 'NEEDS_CLARIFICATION', draft: null, questions: ['Which leave type?'] });
+    const response = await post({ ...input, text: 'tomorrow' });
+    expect(response.body.data).toMatchObject({ status: 'NEEDS_CLARIFICATION', draft: null });
+    expect(response.body.data.questions.join(' ')).toContain('2026-10-16');
+    expect(response.body.data.questions.join(' ')).toContain('Which leave type?');
+  });
+  it('uses a new current year dynamically instead of hardcoding 2026', async () => {
+    const output = { ...ready, draft: { ...ready.draft, startDate: '2027-10-22', endDate: '2027-10-25' } };
+    const { post } = setup(output, '2027-02-01T10:00:00Z');
+    const response = await post({ ...input, text: 'Annual leave from 22 October to 25 October' });
+    expect(response.body.data).toMatchObject({ status: 'READY', referenceDate: '2027-02-01', draft: output.draft });
+  });
+  it('does not move a weekend tomorrow silently to Monday', async () => {
+    const { post } = setup(ready, '2026-10-16T10:00:00Z');
+    expect((await post({ ...input, text: 'Annual leave tomorrow' })).body.error.code).toBe('AI_INVALID_OUTPUT');
+  });
+  it('clarifies next week across two policy years before provider use', async () => {
+    const { post, provider } = setup(ready, '2026-12-27T10:00:00Z');
+    const response = await post({ ...input, text: 'Annual leave next week' });
+    expect(response.body.data.status).toBe('NEEDS_CLARIFICATION');
+    expect(response.body.data.questions.join(' ')).toContain('separate request for each year');
+    expect(provider).not.toHaveBeenCalled();
   });
   it.each([
     { ...input, organisationIds: [] }, { ...input, organisationIds: [org, org] },

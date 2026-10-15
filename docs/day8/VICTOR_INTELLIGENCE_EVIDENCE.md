@@ -88,3 +88,78 @@ Kopano's scoped Insights work stays separate. The agreed API response and cache 
 Before claiming joint Day 8 completion: integrate Kopano's real-data feature; configure the server variables on Vercel and deploy; run a real confirmed-account browser demonstration of generate → review → apply → submit → history on the hosted app; reconcile a real insight; and complete the joint reflection/demo. No external submission or deployment was performed by these checks.
 
 Reflection contribution: keeping AI as a read-only draft preserved the existing leave transaction as the source of truth. Live testing caught provider API/model availability problems that mocks could not catch. A next improvement is shared quota enforcement and broader, explicitly tested natural-language provenance, followed by role-scoped manager summaries only after the two required MVP pillars are demonstrated.
+
+## Follow-up: current-year and relative-date understanding — 15 October 2026
+
+The user's subsequent clarification supersedes the earlier missing-year behaviour recorded above. An omitted year now uses the current Johannesburg year. The server interprets simple today/tomorrow/next-week expressions using its date, supplies the interpretation to Gemini and applies those computed endpoints even if model dates differ. Monday–Friday of the following calendar week is the explicit definition of “next week”, including “next the whole week”. Review warnings show the resolved dates and reference date. A missing leave type still requires clarification.
+
+With a frozen reference date of **15 October 2026**, actual Gemini calls verified:
+
+| Input | Observed result |
+|---|---|
+| “Annual leave next the whole week” | READY, **19–23 October 2026**, **5 weekdays**. |
+| “Sick leave tomorrow” | READY, SICK, **16 October 2026**, **1 weekday**. |
+| “tomorrow” | NEEDS_CLARIFICATION, acknowledges **16 October 2026**, asks which leave type. |
+
+These checks used the actual configured Gemini adapter with a temporary in-memory membership/type repository and a frozen clock, without a database/write-capable dependency. They do not claim a new hosted browser demonstration. The first next-week provider call returned `AI_UNAVAILABLE`; an explicit verification rerun succeeded. The application still does not automatically retry or switch models.
+
+Added tests cover incorrect model dates overridden by authoritative relative dates, yearless named dates, dynamic current-year changes to 2027, Johannesburg midnight context, Sunday/Monday next-week boundaries, leap day, year rollover, weekend tomorrow, qualified/mixed phrases left for full interpretation and cross-policy-year weeks clarified before provider use. The frontend placeholder now suggests natural-language examples.
+
+Final follow-up results: **239 backend tests passed, 36 opt-in tests skipped**, **81 frontend tests passed**, and both production builds passed. An initial fully concurrent backend run hit the existing PGlite profile-schema setup timeout; rerunning with `npm test -- --maxWorkers=2` passed all 15 enabled suites. The existing frontend bundle-size warning remains. The original real PostgreSQL workflow evidence above is preserved; these date changes did not modify leave persistence or decision rules.
+
+## Further user scope: all three AI features — 15 October 2026
+
+The user explicitly requested natural-language drafting, a manager assistant and Ask the data. Implemented the additional tools under the same Gemini configuration; their contracts, access boundaries, interpretation rules and limitations are documented in [AI_FEATURES.md](../AI_FEATURES.md).
+
+### Delivered and verified
+
+- **Natural-language drafting:** “I need annual leave next Thursday and Friday off” was verified with actual Gemini against a frozen 15 October 2026 server context: READY, **22–23 October 2026**, **2 working days**. This was a read-only check with a temporary in-memory membership/type repository, not an additional saved real-employee request. A missing type still requires confirmation; separated weekdays are not broadened into a continuous interval. The displayed next-weekday interpretation now supersedes the earlier “next Thursday” ambiguity rule.
+- **Manager assistant:** added to Leave approvals/Manager inbox, with explicit planning dates, overview, AI-prioritised anonymous facts, complete attention flags and source requests. Server-calculated prose reports clashes, approved versus projected coverage pressure, requests waiting seven elapsed days and pending requests past their start date. The model can only select validated fact IDs; it cannot invent narrative claims or decisions. All figures and names come from scoped source rows.
+- **Ask the data:** added to Team calendar. Supported questions read approved absences/counts, the signed-in member's own balance, or role-authorised pending requests. Gemini returns an allowlisted intent/date/name plan; fixed repository queries and server-written answers use actual records. No arbitrary SQL, mutation, private-reason or other-person-balance access was introduced.
+- **Refresh:** generation is manual. Organisation/input changes abort or ignore old responses; ordinary leave cache invalidation clears old answers/summaries. UI tests proved a normal approval clears the manager snapshot and that neither generating a summary nor asking a question sends a decision/creation call.
+
+### Actual PostgreSQL and Gemini evidence
+
+Command, from `backend/`:
+
+```sh
+TEST_GEMINI_LIVE=1 node --env-file=.env node_modules/vitest/vitest.mjs run tests/ai-tools.integration.test.ts
+```
+
+**5 tests passed** in approximately **27.9 seconds**, starting at **11:23:31 SAST**. The suite used unique temporary users, two organisations, assigned/unassigned members, allocations, pending requests and approved calendar events. It used a test token verifier, not live Supabase sign-in. An initial fixture setup lacked required approval metadata; this was corrected before the passing run, without weakening application constraints.
+
+Reconciled expected values:
+
+| Check | Expected and observed |
+|---|---|
+| Manager scope | 2 active assigned reports; 1 pending and 1 approved request. Unassigned members and the actor excluded. |
+| Coverage on 22 October | 1 approved person, 2 projected people, denominator 2; projected 100%. This is a planning flag, not a confirmed staffing gap. |
+| Admin scope | 4 active reviewable members; 2 pending and 2 approved requests. Actor excluded. |
+| Employee approved-calendar answer | 2 approved records / 2 people in the selected organisation; pending and foreign-organisation records excluded. |
+| Own allocation | 15 allocated − 0 approved − 2 pending = **13 remaining**. |
+| Organisation / reviewer isolation | Unrelated organisation rejected with 403; direct employee access to reviewer repository rejected with 403. |
+| Read-only guarantee | Request, actor-audit and organisation calendar-sync-job counts unchanged after both new tools. |
+
+The fifth test used actual Gemini to plan “Who's off next week?” and then queried PostgreSQL, obtaining the expected **19–23 October** window and **2 people**. It also used actual Gemini to prioritise the real, anonymous manager fact catalog. Selected highlights were validated against canonical facts and reconciled to real scoped request rows. Names/private reasons were not included in the model's summary input; private fixture reasons did not appear in either tool's API output. Teardown removed fixture records.
+
+### Final regression, contract and visual results
+
+| Check | Result |
+|---|---|
+| Backend `npm test -- --maxWorkers=2` | **276 passed, 41 opt-in tests skipped**, 16 enabled suites passed. Final run started **11:32:09 SAST**. Skipped database tests are not counted as passed. |
+| Backend source/test typecheck and build | **Passed**. |
+| Frontend `npm test -- --maxWorkers=2` | **85 passed**, including 4 new full-application flows. |
+| Frontend production build | **Passed**; existing bundle warning remains, approximately **626.6 kB** uncompressed JS. |
+| OpenAPI | **0.7.0 parsed**, all local schema references resolve. |
+| Chrome visual QA | **12 views passed**, **0 browser exceptions**, no horizontal overflow, both new tools at 1440px/390px across DLB/TFI/SSG. |
+
+New unit/security checks cover role rejection before repository/provider access, organisation isolation, bounded/invalid dates, forged identity/body fields, fabricated fact IDs or narrative fields, unsupported/private/mutation questions, SQL-shaped model output, own-only balances, duplicate display names versus distinct employees, multiple requests per person, source records, empty scopes, quota/provider errors and seven elapsed days measured against the actual timestamp.
+
+Screenshots are labelled **simulated session/API data** and prove rendered layout only. Actual database/Gemini checks above are separate. [Visual verification JSON](screenshots/ai-tools-verification.json).
+
+| Tool | D-Lab | The Field Institute | StrideShift Global |
+|---|---|---|---|
+| Ask the data | [Desktop](screenshots/ask-data-dlab-desktop.png) / [Mobile](screenshots/ask-data-dlab-mobile.png) | [Desktop](screenshots/ask-data-field-desktop.png) / [Mobile](screenshots/ask-data-field-mobile.png) | [Desktop](screenshots/ask-data-stride-desktop.png) / [Mobile](screenshots/ask-data-stride-mobile.png) |
+| Manager assistant | [Desktop](screenshots/manager-summary-dlab-desktop.png) / [Mobile](screenshots/manager-summary-dlab-mobile.png) | [Desktop](screenshots/manager-summary-field-desktop.png) / [Mobile](screenshots/manager-summary-field-mobile.png) | [Desktop](screenshots/manager-summary-stride-desktop.png) / [Mobile](screenshots/manager-summary-stride-mobile.png) |
+
+Deployment and a real confirmed-account hosted walkthrough remain separate release checks. Kopano's Insights work remains independently owned; this change neither implements nor claims verification of that partner deliverable. No external submission or Google calendar invitation delivery was performed by these AI checks.

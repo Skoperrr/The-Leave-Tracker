@@ -97,7 +97,7 @@ export function AiLeaveDraft({
         maxLength={1000}
         disabled={disabled}
         aria-describedby="ai-privacy ai-length"
-        placeholder="Annual leave from 22 October 2026 to 23 October 2026."
+        placeholder="Annual leave next week, or sick leave tomorrow."
         onChange={(event) => {
           current.current?.abort();
           current.current = null;

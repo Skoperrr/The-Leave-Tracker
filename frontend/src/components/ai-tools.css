@@ -1,0 +1,75 @@
+.ai-tool {
+  margin-block: 20px;
+  min-width: 0;
+}
+.ai-tool-heading,
+.ai-tool-actions,
+.ai-tool-examples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ai-tool-heading {
+  justify-content: space-between;
+}
+.ai-tool-heading h2 {
+  margin: 0;
+}
+.ai-tool-actions {
+  justify-content: space-between;
+  align-items: end;
+  margin-top: 14px;
+}
+.ai-tool-actions > div {
+  flex: 1 1 150px;
+}
+.ai-tool textarea,
+.ai-tool input {
+  width: 100%;
+}
+.ai-tool-examples {
+  margin-block: 16px;
+}
+.ai-tool-examples button {
+  font-size: 0.8rem;
+  padding: 9px 12px;
+}
+.ai-tool-answer {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 20px;
+  overflow-wrap: anywhere;
+}
+.ai-tool-records,
+.ai-tool-facts {
+  padding-left: 22px;
+}
+.ai-tool-records li,
+.ai-tool-facts li {
+  margin-block: 14px;
+}
+.ai-tool-records li > *,
+.ai-tool-facts small {
+  display: block;
+  margin-top: 4px;
+}
+.ai-tool small {
+  color: var(--muted);
+}
+.ai-tool details {
+  margin-block: 16px;
+}
+.ai-tool summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding-block: 8px;
+}
+.ai-tool .table-scroll {
+  overflow-x: auto;
+}
+@media (max-width: 540px) {
+  .ai-tool-actions > button {
+    width: 100%;
+  }
+}

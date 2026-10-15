@@ -1,0 +1,90 @@
+{
+  "views": [
+    {
+      "name": "ask-data-dlab-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "dlab",
+      "answerVisible": true
+    },
+    {
+      "name": "ask-data-dlab-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "dlab",
+      "answerVisible": true
+    },
+    {
+      "name": "ask-data-field-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "field",
+      "answerVisible": true
+    },
+    {
+      "name": "ask-data-field-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "field",
+      "answerVisible": true
+    },
+    {
+      "name": "ask-data-stride-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "stride",
+      "answerVisible": true
+    },
+    {
+      "name": "ask-data-stride-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "stride",
+      "answerVisible": true
+    },
+    {
+      "name": "manager-summary-dlab-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "dlab",
+      "answerVisible": true
+    },
+    {
+      "name": "manager-summary-dlab-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "dlab",
+      "answerVisible": true
+    },
+    {
+      "name": "manager-summary-field-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "field",
+      "answerVisible": true
+    },
+    {
+      "name": "manager-summary-field-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "field",
+      "answerVisible": true
+    },
+    {
+      "name": "manager-summary-stride-desktop",
+      "width": 1440,
+      "contentWidth": 1440,
+      "theme": "stride",
+      "answerVisible": true
+    },
+    {
+      "name": "manager-summary-stride-mobile",
+      "width": 390,
+      "contentWidth": 390,
+      "theme": "stride",
+      "answerVisible": true
+    }
+  ],
+  "browserExceptions": 0,
+  "note": "Simulated auth/API; actual database and Gemini checked separately. No leave decision or creation calls."
+}

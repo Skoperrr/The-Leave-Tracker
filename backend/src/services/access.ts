@@ -8,8 +8,9 @@ import type { OnboardingService } from './onboarding.js';
 import type { CalendarIntegrationService } from './calendar-integration.js';
 import type { CalendarWorker } from './calendar-worker.js';
 import type { AiLeaveDraftService } from './ai-leave-draft.js';
+import type { AiToolsService } from './ai-tools.js';
 
-export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService; onboarding?: OnboardingService; google?: CalendarIntegrationService; calendarWorker?: CalendarWorker; ai?: AiLeaveDraftService };
+export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService; onboarding?: OnboardingService; google?: CalendarIntegrationService; calendarWorker?: CalendarWorker; ai?: AiLeaveDraftService; aiTools?: AiToolsService };
 
 export async function authenticateAccount(services: AccessServices, token: string): Promise<Account> {
   const identityId = await services.verifyToken(token);

@@ -192,6 +192,84 @@ beforeEach(() => {
           workingDays: 2,
           warnings: ["Balances and overlaps are checked on submission."],
         });
+      if (path === "/ai/manager-summary") {
+        const rows = requests.filter(
+          (item) =>
+            item.organisationId === body.organisationId &&
+            ["PENDING", "APPROVED"].includes(item.status),
+        );
+        return response({
+          referenceDate: "2026-10-15",
+          generatedAt: "2026-10-15T08:00:00Z",
+          timezone: "Africa/Johannesburg",
+          period: { from: body.from, to: body.to },
+          scope: "DIRECT_REPORTS",
+          activeMemberCount: 2,
+          pendingCount: rows.filter((row) => row.status === "PENDING").length,
+          approvedCount: 0,
+          summary:
+            "Pending requests need your review; no decisions have been made.",
+          aiUsed: true,
+          coverageThresholdPercent: 30,
+          highlights: [],
+          attention: [],
+          sources: rows.map((row) => ({
+            id: row.id,
+            employeeDisplayName: "Ayanda Example",
+            startDate: row.startDate,
+            endDate: row.endDate,
+            status: row.status,
+          })),
+          limitations: [
+            "Coverage is a planning signal, not a staffing roster.",
+          ],
+        });
+      }
+      if (path === "/ai/ask-data") {
+        if (String(body.question).includes("balance"))
+          return response({
+            status: "ANSWER",
+            intent: "MY_BALANCE",
+            scope: "OWN_BALANCE",
+            period: null,
+            referenceDate: "2026-10-15",
+            generatedAt: "2026-10-15T08:00:00Z",
+            answer: "Your allocated balances are shown below.",
+            rows: [],
+            balances: [
+              {
+                leaveTypeName: "Annual leave",
+                year: 2026,
+                allocatedDays: 20,
+                approvedDays: 3,
+                pendingDays: 2,
+                remainingDays: 15,
+              },
+            ],
+          });
+        const rows = requests.filter(
+          (item) =>
+            item.organisationId === body.organisationId &&
+            item.status === "APPROVED",
+        );
+        return response({
+          status: "ANSWER",
+          intent: "WHO_OFF",
+          scope: "ORGANISATION_CALENDAR",
+          period: { from: "2026-10-19", to: "2026-10-23" },
+          referenceDate: "2026-10-15",
+          generatedAt: "2026-10-15T08:00:00Z",
+          answer: `${rows.length} approved leave records were found.`,
+          balances: [],
+          rows: rows.map((row) => ({
+            requestId: row.id,
+            employeeDisplayName: "Ayanda Example",
+            startDate: row.startDate,
+            endDate: row.endDate,
+          })),
+          limitations: ["Private reasons are excluded."],
+        });
+      }
       const orgId = url.searchParams.get("organisationId");
       if (path.endsWith("/leave-types")) {
         const org = path.split("/")[2];
@@ -800,6 +878,109 @@ describe("Frontend integration flows", () => {
     expect(
       calls.filter((call) => call.path.startsWith("/leave-requests?")).length,
     ).toBeGreaterThan(2);
+  });
+  it("answers calendar questions only on demand, shows source rows and clears answers on organisation change", async () => {
+    requests = [
+      {
+        ...createRequest("approved-source", dlab),
+        status: "APPROVED",
+        startDate: "2026-10-22",
+        endDate: "2026-10-23",
+      },
+    ];
+    const user = userEvent.setup();
+    mount("/calendar");
+    await screen.findByRole("heading", { name: "Ask the data" });
+    expect(calls.some((call) => call.path === "/ai/ask-data")).toBe(false);
+    await user.click(
+      screen.getByRole("button", { name: "Who's off next week?" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Ask the data" }));
+    await screen.findByRole("heading", { name: "From your leave records" });
+    expect(
+      screen.getByText("1 approved leave records were found."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Source records (1)")).toBeInTheDocument();
+    expect(screen.queryByText("PRIVATE_REASON_123")).not.toBeInTheDocument();
+    expect(
+      calls.filter((call) => call.method === "POST").map((call) => call.path),
+    ).toEqual(["/ai/ask-data"]);
+    await user.selectOptions(
+      screen.getByLabelText("YOUR ORGANISATION"),
+      "org-field",
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "From your leave records" }),
+      ).not.toBeInTheDocument(),
+    );
+  });
+  it("shows own database balance answers without exposing manager-only question shortcuts to employees", async () => {
+    const user = userEvent.setup();
+    mount("/calendar");
+    await screen.findByRole("heading", { name: "Ask the data" });
+    expect(
+      screen.queryByRole("button", {
+        name: "What requests are pending next week?",
+      }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "What is my leave balance?" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Ask the data" }));
+    const balances = await screen.findByRole("table", {
+      name: "Your allocated balances",
+    });
+    expect(
+      within(balances).getByRole("cell", { name: "15" }),
+    ).toBeInTheDocument();
+  });
+  it("generates manager review without decisions and clears the snapshot after an actual approval", async () => {
+    profile.memberships = [
+      { ...dlab, id: "manager-membership", role: "MANAGER" },
+    ];
+    requests = [
+      {
+        ...createRequest("pending-source", dlab),
+        employeeDisplayName: "Ayanda Example",
+        employeeId: "other-profile",
+      },
+    ];
+    const user = userEvent.setup();
+    mount("/manager");
+    await screen.findByRole("button", { name: "Approve request" });
+    expect(calls.some((call) => call.path === "/ai/manager-summary")).toBe(
+      false,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Generate manager summary" }),
+    );
+    await screen.findByRole("heading", { name: "AI-assisted review summary" });
+    expect(calls.some((call) => call.path.endsWith("/decision"))).toBe(false);
+    expect(screen.getByText("Source requests (1)")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Approve request" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "AI-assisted review summary" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      calls.filter((call) => call.path.endsWith("/decision")),
+    ).toHaveLength(1);
+  });
+  it("keeps ordinary calendar functionality when the AI provider fails", async () => {
+    failure = { path: "/ai/ask-data", status: 503, code: "AI_UNAVAILABLE" };
+    const user = userEvent.setup();
+    mount("/calendar");
+    await user.click(
+      await screen.findByRole("button", { name: "Who's off next week?" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Ask the data" }));
+    await screen.findByRole("alert");
+    expect(screen.getByLabelText("Your leave question")).toHaveValue(
+      "Who's off next week?",
+    );
+    expect(screen.getByRole("button", { name: "Next month" })).toBeEnabled();
   });
   it("requires a decline comment and sends only a documented decision payload", async () => {
     profile.memberships = [

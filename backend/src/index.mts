@@ -11,9 +11,7 @@ import { createLeaveRepository } from './repositories/leave.js';
 import { createLeaveService } from './services/leave.js';
 import { createManagerService } from './services/manager.js';
 import { createAdminService } from './services/admin.js';
-import { readAiEnvironment } from './config/ai-env.js';
-import { createGeminiProvider } from './lib/ai-provider.js';
-import { createAiLeaveDraftService } from './services/ai-leave-draft.js';
+import { createAiRuntime } from './services/ai-runtime.js';
 
 // Vercel owns the listener and function lifecycle. Reuse the pool per instance;
 // keep server.ts for standalone development and its database startup check.
@@ -25,7 +23,7 @@ const app = express();
 app.use(createApp(environment, {
   ...createCalendarRuntime(database, configuration), verifyToken: createTokenVerifier(configuration),
   repository: createAccessRepository(database),
-  ai: createAiLeaveDraftService(createAccessRepository(database), createGeminiProvider(readAiEnvironment())),
+  ...createAiRuntime(database),
   leave: createLeaveService(repository),
   manager: createManagerService(repository),
   admin: createAdminService(repository),

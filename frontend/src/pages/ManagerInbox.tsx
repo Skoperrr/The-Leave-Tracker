@@ -13,6 +13,7 @@ import {
 } from "../components/ui";
 import { RequestCard } from "../components/RequestCard";
 import { DecisionForm } from "../components/DecisionForm";
+import { ManagerAssistant } from "../components/ManagerAssistant";
 export function ManagerInbox() {
   const { membership, me } = useOrganisation();
   const org = membership.organisationId;
@@ -46,6 +47,7 @@ export function ManagerInbox() {
         leave.
       </PageHeading>
       <ApprovalCalendarStatus />
+      <ManagerAssistant key={membership.id} />
       <div className="filters">
         <div>
           <label htmlFor="inbox-status">Status</label>

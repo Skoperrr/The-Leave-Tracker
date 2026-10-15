@@ -2,6 +2,8 @@
 
 Victor's Pillar A, 15 October 2026. This extends the existing Request leave page. Kopano's Insights feature remains separately owned under the two Day 8 specifications.
 
+The same configuration now also enables the manager assistant and Ask the data. See [all three feature contracts and usage](AI_FEATURES.md).
+
 ## Configure the server
 
 1. Create an API key in [Google AI Studio](https://aistudio.google.com/api-keys) using a project on the free tier.
@@ -26,9 +28,9 @@ Google currently lists a free tier for 3.5 Flash-Lite. Availability and quotas d
 ## Employee flow
 
 1. Open **Request leave** and select the organisations.
-2. Describe the type and exact dates, including the year. Example: “Annual leave from 22 October 2026 to 23 October 2026.”
+2. Describe the type and dates naturally. Examples: “Annual leave next week”, “Sick leave tomorrow”, or “Annual leave from 22 October to 23 October”. The server uses today's date in Africa/Johannesburg and infers the current year when omitted.
 3. Choose **Generate draft**. Review the type, organisation names, inclusive dates, server-calculated weekdays and warnings.
-4. If clarification is requested, edit the description and regenerate. Ambiguous “next Thursday”, missing type/year and unsupported half days are not silently guessed.
+4. If clarification is requested, edit the description and regenerate. Ambiguous “next Thursday”, missing type and unsupported half days are not silently guessed. Omission of the year alone is no longer a reason to request clarification.
 5. Choose **Use these details** to replace only the form's type and dates. The private reason remains your own input. You can edit the form afterward.
 6. Choose **Submit request** separately. Only this step creates pending leave; it rechecks the actual balance, overlaps and memberships. A draft is not a reservation.
 
@@ -39,6 +41,8 @@ Your description is sent to Google. The panel explains this before generation an
 `POST /api/v1/ai/leave-draft`, bearer authentication, strict `{organisationIds, text}` body. See the [OpenAPI contract](../backend/openapi.yaml) and [Victor specification](DAY8_VICTOR_PILLAR_A_SPECIFICATION.md).
 
 The server checks every selected active membership before type reads/provider access; intersects active leave types; keeps identities/organisation IDs out of Gemini's prompt; validates output with Zod; rejects invalid dates, unsupported codes, reversed/cross-year/weekend-only ranges; and computes weekdays itself. The response reference date uses Africa/Johannesburg. Provider output has no database or calendar tools.
+
+Simple “today”, “tomorrow” and “next week” expressions are calculated deterministically on the server and supplied to Gemini. “Next week” includes “next whole week”, “next the whole week” and “the whole of next week”; it means the next calendar week's Monday–Friday, even when today is Monday or Sunday. The server's recognised range overrides conflicting model dates and appears in the review warnings. With a reference date of 15 October 2026, tomorrow is 16 October 2026 and next week is 19–23 October 2026 (5 weekdays). These examples are not hardcoded runtime dates. A bare “tomorrow” acknowledges that date while asking for a leave type. Qualified expressions such as “tomorrow to Friday” or “next week except Wednesday” are interpreted as a whole rather than forced into these simple ranges. A next-week range crossing two policy years still requires separate requests; a weekend tomorrow is not silently moved to Monday.
 
 This MVP supports one full-day contiguous range. Public holidays are included, following existing policy. Balances and overlaps are intentionally checked at actual submission, not preview. The model remains fallible: review the proposed dates, especially natural-language interpretations.
 
