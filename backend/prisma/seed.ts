@@ -1,3 +1,4 @@
+import { defaultLeaveTypes } from '../src/config/leave-types.js';
 import { createDatabase } from '../src/lib/database.js';
 import { databaseFailureCategory } from '../src/utils/database-error.js';
 
@@ -14,15 +15,15 @@ async function main() {
         const organisation = await transaction.organisation.upsert({
           where: { slug }, update: {}, create: { slug, name },
         });
-        for (const [code, leaveName] of [['ANNUAL', 'Annual leave'], ['SICK', 'Sick leave']] as const) {
+        for (const { code, name: leaveName, balanceLimited } of defaultLeaveTypes) {
           await transaction.leaveType.upsert({
             where: { organisationId_code: { organisationId: organisation.id, code } },
-            update: {}, create: { organisationId: organisation.id, code, name: leaveName },
+            update: {}, create: { organisationId: organisation.id, code, name: leaveName, balanceLimited },
           });
         }
       }
     }, { timeout: 30_000 });
-    console.info('Baseline seed complete: three organisations and annual/sick leave types. No login accounts were created.');
+    console.info('Baseline seed complete: three organisations and six leave types per organisation. No login accounts were created.');
   } finally { await database.$disconnect(); }
 }
 

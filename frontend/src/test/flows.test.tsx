@@ -335,6 +335,17 @@ beforeEach(() => {
             code: "ANNUAL",
             name: "Annual leave",
           },
+          ...[
+            ["FAMILY_RESPONSIBILITY", "Family responsibility leave"],
+            ["MATERNITY", "Maternity leave"],
+            ["PARENTAL", "Parental leave"],
+            ["RELIGIOUS", "Religious leave"],
+          ].map(([code, name]) => ({
+            id: `${code}-${org}`,
+            organisationId: org,
+            code,
+            name,
+          })),
         ]);
       }
       if (path === "/balances")
@@ -901,6 +912,32 @@ describe("Frontend integration flows", () => {
     });
     expect(screen.getAllByText("Pending")).toHaveLength(2);
     expect(screen.getAllByText("5 working days")).toHaveLength(2);
+  });
+  it.each([
+    ["FAMILY_RESPONSIBILITY", "Family responsibility leave"],
+    ["MATERNITY", "Maternity leave"],
+    ["PARENTAL", "Parental leave"],
+    ["RELIGIOUS", "Religious leave"],
+  ])("offers %s and submits the selected code", async (code, name) => {
+    const user = userEvent.setup();
+    mount("/requests/new");
+    await screen.findByRole("option", { name });
+    await user.selectOptions(screen.getByLabelText("Leave type"), code);
+    fireEvent.change(screen.getByLabelText("Start date"), {
+      target: { value: "2026-11-02" },
+    });
+    fireEvent.change(screen.getByLabelText("End date"), {
+      target: { value: "2026-11-03" },
+    });
+    await user.click(screen.getByRole("button", { name: "Submit request" }));
+    await screen.findByRole("heading", {
+      name: "Your time away is on its way.",
+    });
+    expect(
+      calls.find(
+        (call) => call.path === "/leave-requests" && call.method === "POST",
+      )?.body,
+    ).toMatchObject({ leaveTypeCode: code, organisationIds: ["org-dlab"] });
   });
   it("keeps AI generation and applying read-only until explicit leave submission, preserving the private reason", async () => {
     const user = userEvent.setup();
@@ -1570,49 +1607,64 @@ describe("Email and calendar handoff", () => {
     expect(profileWrites).toEqual([{ fullName: "Ayanda Example" }]);
     expect(calls.some((call) => call.path.startsWith("/balances"))).toBe(false);
   });
-  it("assigns employee membership then creates an explicit allocation", async () => {
-    profile.memberships = [{ ...dlab, role: "ADMIN" }];
-    mount("/admin");
-    await screen.findByRole("heading", { name: "Assign organisation access" });
-    await userEvent.type(
-      screen.getByLabelText("Account email"),
-      "New@Example.com",
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Assign employee access" }),
-    );
-    await screen.findByText(/Employee access assigned/);
-    expect(
-      calls.find(
-        (call) => call.path === "/admin/memberships" && call.method === "POST",
-      )?.body,
-    ).toEqual({ organisationId: "org-dlab", email: "new@example.com" });
-    await userEvent.selectOptions(
-      screen.getByLabelText("Member", { exact: true }),
-      "new-member",
-    );
-    await userEvent.selectOptions(
-      screen.getByLabelText("Leave type"),
-      "annual-org-dlab",
-    );
-    fireEvent.change(screen.getByLabelText("Policy year"), {
-      target: { value: "2026" },
-    });
-    await userEvent.type(screen.getByLabelText("Allocated days"), "18.5");
-    await userEvent.click(
-      screen.getByRole("button", { name: "Create allocation" }),
-    );
-    await screen.findByText("Leave allocation created.");
-    expect(
-      calls.find((call) => call.path === "/admin/allocations")?.body,
-    ).toEqual({
-      organisationId: "org-dlab",
-      membershipId: "new-member",
-      leaveTypeId: "annual-org-dlab",
-      year: 2026,
-      allocatedDays: 18.5,
-    });
-  });
+  it.each([
+    ["annual-org-dlab", "Annual leave"],
+    ["FAMILY_RESPONSIBILITY-org-dlab", "Family responsibility leave"],
+    ["MATERNITY-org-dlab", "Maternity leave"],
+    ["PARENTAL-org-dlab", "Parental leave"],
+    ["RELIGIOUS-org-dlab", "Religious leave"],
+  ])(
+    "assigns employee membership then allocates %s",
+    async (typeId, typeName) => {
+      profile.memberships = [{ ...dlab, role: "ADMIN" }];
+      mount("/admin");
+      await screen.findByRole("heading", {
+        name: "Assign organisation access",
+      });
+      await userEvent.type(
+        screen.getByLabelText("Account email"),
+        "New@Example.com",
+      );
+      await userEvent.click(
+        screen.getByRole("button", { name: "Assign employee access" }),
+      );
+      await screen.findByText(/Employee access assigned/);
+      expect(
+        calls.find(
+          (call) =>
+            call.path === "/admin/memberships" && call.method === "POST",
+        )?.body,
+      ).toEqual({ organisationId: "org-dlab", email: "new@example.com" });
+      await userEvent.selectOptions(
+        screen.getByLabelText("Member", { exact: true }),
+        "new-member",
+      );
+      await userEvent.selectOptions(
+        screen.getByLabelText("Leave type"),
+        typeId,
+      );
+      expect(
+        screen.getByRole("option", { name: typeName }),
+      ).toBeInTheDocument();
+      fireEvent.change(screen.getByLabelText("Policy year"), {
+        target: { value: "2026" },
+      });
+      await userEvent.type(screen.getByLabelText("Allocated days"), "18.5");
+      await userEvent.click(
+        screen.getByRole("button", { name: "Create allocation" }),
+      );
+      await screen.findByText("Leave allocation created.");
+      expect(
+        calls.find((call) => call.path === "/admin/allocations")?.body,
+      ).toEqual({
+        organisationId: "org-dlab",
+        membershipId: "new-member",
+        leaveTypeId: typeId,
+        year: 2026,
+        allocatedDays: 18.5,
+      });
+    },
+  );
   it("paginates writable calendars and saves invitations only on explicit opt-in", async () => {
     profile.memberships = [{ ...dlab, role: "ADMIN" }];
     mount("/admin/calendar");

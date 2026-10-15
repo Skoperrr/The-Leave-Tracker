@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { additionalLeaveTypes } from '../src/config/leave-types.js';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/application.js';
 import { readEnvironment } from '../src/config/env.js';
@@ -58,6 +59,14 @@ describe('AI draft route and validation (mock provider, no persistence)', () => 
     const response = await setup({ ...ready, draft: { ...ready.draft, reason } }).post();
     expect(response.status).toBe(422);
     expect(response.body.error.code).toBe('AI_INVALID_OUTPUT');
+  });
+  it.each(additionalLeaveTypes)('drafts $name from the organisation-provided types', async ({ code, name }) => {
+    const { post, repository, provider } = setup({ ...ready, draft: { ...ready.draft, leaveTypeCode: code } });
+    repository.listLeaveTypes.mockImplementation(async organisationId => [{ id: code, organisationId, code, name }]);
+    const response = await post({ ...input, text: `I need ${name} tomorrow` });
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({ status: 'READY', draft: { leaveTypeCode: code, startDate: '2026-10-16', endDate: '2026-10-16' } });
+    expect(provider).toHaveBeenCalledWith(expect.objectContaining({ leaveTypes: [{ code, name }] }));
   });
   it('uses the intersection of active type codes for all selected organisations', async () => {
     const { post, provider, repository } = setup();

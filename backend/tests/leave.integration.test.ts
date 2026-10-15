@@ -1,9 +1,11 @@
+import { additionalLeaveTypes } from '../src/config/leave-types.js';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase } from '../src/lib/database.js';
 import { createAccessRepository } from '../src/repositories/access.js';
 import { createLeaveRepository } from '../src/repositories/leave.js';
+import { createAdminService } from '../src/services/admin.js';
 import { createLeaveService } from '../src/services/leave.js';
 import { createManagerService } from '../src/services/manager.js';
 import type { LeaveRepository, LeaveTransaction } from '../src/repositories/leave.js';
@@ -58,6 +60,7 @@ describe.skipIf(!process.env.DATABASE_URL)('employee workflows on real PostgreSQ
         { id: annualA, organisationId: orgA, code: 'ANNUAL', name: 'Annual' },
         { id: sickA, organisationId: orgA, code: 'SICK', name: 'Sick' },
         { id: annualB, organisationId: orgB, code: 'ANNUAL', name: 'Annual' },
+        ...additionalLeaveTypes.map(type => ({ ...type, organisationId: orgA })),
       ] });
       await tx.leaveBalance.createMany({ data: [
         { membershipId: memberA, organisationId: orgA, leaveTypeId: annualA, year: 2026, allocatedDays: 15 },
@@ -71,6 +74,7 @@ describe.skipIf(!process.env.DATABASE_URL)('employee workflows on real PostgreSQ
       verifyToken: async (token) => ({ owner, peer, manager, admin, fieldManager, wrongManager } as Record<string, string>)[token] ?? null,
       repository: createAccessRepository(db), leave: createLeaveService(createLeaveRepository(db)),
       manager: createManagerService(createLeaveRepository(db)),
+      admin: createAdminService(createLeaveRepository(db)),
     });
   }, 70_000);
   beforeEach(async () => {
@@ -92,6 +96,34 @@ describe.skipIf(!process.env.DATABASE_URL)('employee workflows on real PostgreSQ
     } finally { await db.$disconnect(); }
   }, 40_000);
 
+  it.each(additionalLeaveTypes)('requires admin allocation for $name and reserves only that balance', async ({ code, name }) => {
+    const types = await request(app).get(`/api/v1/organisations/${orgA}/leave-types`).set('Authorization', 'Bearer owner');
+    expect(types.status).toBe(200);
+    expect(types.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ code, name })]));
+    const type = await db.leaveType.findUniqueOrThrow({ where: { organisationId_code: { organisationId: orgA, code } } });
+    const unallocated = await create({ ...payload(), leaveTypeCode: code });
+    expect(unallocated.status).toBe(422);
+    expect(unallocated.body.error.code).toBe('INSUFFICIENT_BALANCE');
+    expect(await db.leaveRequest.count({ where: { userId: owner } })).toBe(0);
+    const allocation = { organisationId: orgA, membershipId: memberA, leaveTypeId: type.id, year: 2026, allocatedDays: 8 };
+    const employeeAttempt = await request(app).post('/api/v1/admin/allocations').set('Authorization', 'Bearer owner').send(allocation);
+    expect(employeeAttempt.status).toBe(403);
+    const assigned = await request(app).post('/api/v1/admin/allocations').set('Authorization', 'Bearer admin').send(allocation);
+    expect(assigned.status).toBe(201);
+    const result = await create({ ...payload(), leaveTypeCode: code });
+    expect(result.status).toBe(201);
+    const item = result.body.data.requests[0];
+    expect(item).toMatchObject({ status: 'PENDING', leaveTypeName: name, workingDays: 5 });
+    expect((await balances()).body.data.find((entry: { leaveTypeId: string }) => entry.leaveTypeId === type.id)).toMatchObject({ pendingDays: 5, remainingDays: 3 });
+    expect(await db.calendarEvent.count({ where: { requestId: item.id } })).toBe(0);
+    expect((await decide(item.id)).status).toBe(200);
+    expect((await db.leaveRequest.findUniqueOrThrow({ where: { id: item.id } })).status).toBe('APPROVED');
+    expect((await balances()).body.data.find((entry: { leaveTypeId: string }) => entry.leaveTypeId === type.id)).toMatchObject({ approvedDays: 5, pendingDays: 0, remainingDays: 3 });
+    expect((await balances()).body.data.find((entry: { leaveTypeId: string }) => entry.leaveTypeId === annualA)).toMatchObject({ remainingDays: 15 });
+    const events = await calendar();
+    expect(events.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ requestId: item.id })]));
+    expect(JSON.stringify(events.body)).not.toContain('Fictional private test note');
+  }, 30_000);
   it('persists five weekdays and reserves them until cancellation', async () => {
     const created = await create();
     expect(created.status).toBe(201);
