@@ -1,5 +1,6 @@
 export type NavIconName =
   | "overview"
+  | "insights"
   | "request"
   | "history"
   | "calendar"
@@ -9,6 +10,7 @@ export type NavIconName =
 export type ShellIconName = "menu" | "close" | "collapse" | "expand";
 const paths: Record<NavIconName, string> = {
   overview: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
+  insights: "M4 3v17h17 M8 16v-4 M13 16V8 M18 16V5 M7 8l5-4 5-2",
   request:
     "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M12 12v6 M9 15h6",
   history: "M3 11a9 9 0 1 1 2.6 7.4 M3 4v7h7 M12 7v5l3 2",

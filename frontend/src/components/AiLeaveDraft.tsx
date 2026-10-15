@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { generateLeaveDraft } from "../api/ai";
 import type { AiDraftResult, ReadyAiDraft } from "../types/ai";
-import { ErrorNotice, DominoSpinner } from "./ui";
+import { ErrorNotice } from "./ui";
+import { AiLoader } from "./AiLoader";
 import "./ai-leave-draft.css";
 
 type Props = {
@@ -77,7 +78,7 @@ export function AiLeaveDraft({
 
   return (
     <section
-      className="ai-draft"
+      className="ai-draft ai-surface"
       aria-labelledby="ai-draft-title"
       aria-busy={busy}
     >
@@ -129,19 +130,14 @@ export function AiLeaveDraft({
           }
           onClick={() => void generate()}
         >
-          {busy ? (
-            <>
-              <DominoSpinner compact /> Generating draft…
-            </>
-          ) : (
-            "Generate draft"
-          )}
+          {busy ? "Generating draft…" : "Generate draft"}
         </button>
       </div>
       {busy && (
-        <p role="status">
-          Gemini is preparing a suggestion. Your leave has not been submitted.
-        </p>
+        <AiLoader
+          label="Gemini is preparing your draft"
+          detail="Your leave has not been submitted. Review the suggestion before sending."
+        />
       )}
       {error ? <ErrorNotice error={error} /> : null}
       {applied && (
@@ -151,7 +147,7 @@ export function AiLeaveDraft({
         </p>
       )}
       {result?.status === "NEEDS_CLARIFICATION" && (
-        <div className="ai-draft-review" role="status">
+        <div className="ai-draft-review ai-result" role="status">
           <h3>A little more detail, please</h3>
           <ul>
             {result.questions.map((question, index) => (
@@ -165,7 +161,7 @@ export function AiLeaveDraft({
         </div>
       )}
       {result?.status === "READY" && (
-        <div className="ai-draft-review">
+        <div className="ai-draft-review ai-result">
           <h3>AI suggestion — review before submitting</h3>
           <dl className="ai-draft-details">
             <div>

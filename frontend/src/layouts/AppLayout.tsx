@@ -130,7 +130,7 @@ export function WorkspaceShell({
     ...(reviewer
       ? [
           { path: reviewPath, label: "Leave approvals", icon: "approval" },
-          { path: "/insights", label: "Insights", icon: "overview" },
+          { path: "/insights", label: "Insights", icon: "insights" },
         ]
       : []),
     ...(membership.role === "ADMIN"

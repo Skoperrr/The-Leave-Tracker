@@ -5,6 +5,7 @@ import { askLeaveData } from "../api/ai-tools";
 import { useAiTool } from "../hooks/useAiTool";
 import type { AskDataResult } from "../types/ai-tools";
 import { ErrorNotice } from "./ui";
+import { AiLoader } from "./AiLoader";
 import "./ai-tools.css";
 
 export function AskLeaveData() {
@@ -16,7 +17,7 @@ export function AskLeaveData() {
   const reviewer = ["MANAGER", "ADMIN"].includes(membership.role);
   return (
     <section
-      className="panel ai-tool"
+      className="panel ai-tool ai-surface"
       aria-labelledby="ask-data-title"
       aria-busy={busy}
     >
@@ -79,13 +80,14 @@ export function AskLeaveData() {
         </div>
       </form>
       {busy && (
-        <p role="status">
-          Interpreting your question and checking authorised records…
-        </p>
+        <AiLoader
+          label="Gemini is exploring your question"
+          detail="Checking the records you can access."
+        />
       )}
       {error ? <ErrorNotice error={error} /> : null}
       {result?.status === "NEEDS_CLARIFICATION" && (
-        <div className="notice" role="status">
+        <div className="notice ai-result" role="status">
           <ul>
             {result.questions.map((item, index) => (
               <li key={index}>{item}</li>
@@ -94,7 +96,7 @@ export function AskLeaveData() {
         </div>
       )}
       {result?.status === "ANSWER" && (
-        <div className="ai-tool-answer" aria-live="polite">
+        <div className="ai-tool-answer ai-result" aria-live="polite">
           <h3>From your leave records</h3>
           <p>{result.answer}</p>
           {result.interpretation && (

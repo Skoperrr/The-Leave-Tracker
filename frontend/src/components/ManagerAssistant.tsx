@@ -4,6 +4,7 @@ import { useOrganisation } from "../auth/OrganizationProvider";
 import { useAiTool } from "../hooks/useAiTool";
 import type { ManagerSummary } from "../types/ai-tools";
 import { ErrorNotice } from "./ui";
+import { AiLoader } from "./AiLoader";
 import "./ai-tools.css";
 
 export function ManagerAssistant() {
@@ -27,7 +28,7 @@ export function ManagerAssistant() {
   const [showAll, setShowAll] = useState(false);
   return (
     <section
-      className="panel ai-tool"
+      className="panel ai-tool ai-surface"
       aria-labelledby="manager-assistant-title"
       aria-busy={busy}
     >
@@ -86,13 +87,14 @@ export function ManagerAssistant() {
         </p>
       </form>
       {busy && (
-        <p role="status">
-          Checking authorised requests and preparing highlights…
-        </p>
+        <AiLoader
+          label="Gemini is preparing your review"
+          detail="Finding overlaps and prioritising authorised team facts."
+        />
       )}
       {error ? <ErrorNotice error={error} /> : null}
       {result && (
-        <div className="ai-tool-answer" aria-live="polite">
+        <div className="ai-tool-answer ai-result" aria-live="polite">
           <h3>
             {result.aiUsed
               ? "AI-assisted review summary"
