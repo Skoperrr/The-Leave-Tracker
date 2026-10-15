@@ -10,6 +10,7 @@ type Props = {
   organisations: Array<{ organisationId: string; organisationName: string }>;
   leaveTypes: Array<{ code: string; name: string }>;
   formRevision: string;
+  currentReason?: string;
   disabled: boolean;
   onApply: (result: ReadyAiDraft) => void;
 };
@@ -19,6 +20,7 @@ export function AiLeaveDraft({
   organisations,
   leaveTypes,
   formRevision,
+  currentReason = "",
   disabled,
   onApply,
 }: Props) {
@@ -27,6 +29,16 @@ export function AiLeaveDraft({
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [replaceReason, setReplaceReason] = useState(false);
+  useEffect(() => {
+    setReplaceReason(false);
+  }, [currentReason, result]);
+  const hasDifferentReason = Boolean(
+    currentReason.trim() &&
+    result?.status === "READY" &&
+    result.draft.reason &&
+    currentReason !== result.draft.reason,
+  );
   const current = useRef<AbortController | null>(null);
   const scope = [...organisationIds].sort().join(",");
   const typesKey = leaveTypes
@@ -98,7 +110,7 @@ export function AiLeaveDraft({
         maxLength={1000}
         disabled={disabled}
         aria-describedby="ai-privacy ai-length"
-        placeholder="Annual leave next week, or sick leave tomorrow."
+        placeholder="Sick leave tomorrow because I cut my hand."
         onChange={(event) => {
           current.current?.abort();
           current.current = null;
@@ -110,9 +122,11 @@ export function AiLeaveDraft({
         }}
       />
       <p className="caption" id="ai-privacy">
-        Your description is sent to Google Gemini. Include only the leave type
-        and dates; keep medical and other private details out. Google may use
-        free-tier input to improve its products.
+        Your description, including any explanation you provide, is sent to
+        Google Gemini. An explanation is optional and can become a suggested
+        private reason for you to review. You can enter sensitive details
+        directly in the private reason field instead; that field is not sent to
+        Gemini. Google may use free-tier input to improve its products.
       </p>
       <div className="ai-draft-actions">
         <span className="caption" id="ai-length">
@@ -197,15 +211,41 @@ export function AiLeaveDraft({
               </dd>
             </div>
           </dl>
+          {result.draft.reason && (
+            <div className="ai-draft-reason">
+              <h4>Suggested private reason</h4>
+              <p>{result.draft.reason}</p>
+              <p className="caption">
+                Review the wording for accuracy. You can edit it in the form
+                before submitting. Private reasons are never included in the
+                team calendar.
+              </p>
+              {hasDifferentReason && (
+                <label className="ai-reason-choice">
+                  <input
+                    type="checkbox"
+                    checked={replaceReason}
+                    disabled={disabled}
+                    onChange={(event) => setReplaceReason(event.target.checked)}
+                  />
+                  Replace my existing private reason with this suggestion
+                </label>
+              )}
+            </div>
+          )}
           <ul className="caption">
             {result.warnings.map((warning, index) => (
               <li key={index}>{warning}</li>
             ))}
           </ul>
           <p className="caption">
-            Applying replaces the form’s leave type and dates. Your private
-            reason stays unchanged. Reference date: {result.referenceDate} (
-            {result.timezone}).
+            Applying replaces the form’s leave type and dates.{" "}
+            {result.draft.reason
+              ? hasDifferentReason && !replaceReason
+                ? "Your existing private reason will be kept."
+                : "The suggested private reason will also be filled in."
+              : "Your private reason stays unchanged."}{" "}
+            Reference date: {result.referenceDate} ({result.timezone}).
           </p>
           <div className="ai-draft-actions">
             <button
@@ -226,7 +266,14 @@ export function AiLeaveDraft({
                 )
               }
               onClick={() => {
-                onApply(result);
+                onApply(
+                  hasDifferentReason && !replaceReason
+                    ? {
+                        ...result,
+                        draft: { ...result.draft, reason: undefined },
+                      }
+                    : result,
+                );
                 setResult(null);
                 setApplied(true);
               }}

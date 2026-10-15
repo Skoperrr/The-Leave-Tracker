@@ -38,6 +38,27 @@ describe('AI draft route and validation (mock provider, no persistence)', () => 
       leaveTypes: [{ code: 'ANNUAL', name: 'Annual leave' }] });
     expect(JSON.stringify(provider.mock.calls)).not.toContain(account.email);
   });
+  it('returns a formal suggested private reason alongside the server-resolved sick leave date', async () => {
+    const reason = 'I am requesting sick leave because I cut my hand.';
+    const { post, repository } = setup({ ...ready, draft: { ...ready.draft, leaveTypeCode: 'SICK', reason } });
+    repository.listLeaveTypes.mockImplementation(async organisationId => [
+      { id: 'sick', organisationId, code: 'SICK', name: 'Sick leave' },
+    ]);
+    const response = await post({ ...input, text: 'I want sick leave tomorrow because I cut my hand' });
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({ status: 'READY', workingDays: 1,
+      draft: { leaveTypeCode: 'SICK', startDate: '2026-10-16', endDate: '2026-10-16', reason } });
+  });
+  it('accepts no explanation without requiring a private reason', async () => {
+    const response = await setup({ ...ready, draft: { ...ready.draft, reason: null } }).post();
+    expect(response.status).toBe(200);
+    expect(response.body.data.draft.reason).toBeNull();
+  });
+  it.each(['', '   ', 'x'.repeat(2001), 123, { medical: 'details' }])('rejects an invalid suggested reason', async reason => {
+    const response = await setup({ ...ready, draft: { ...ready.draft, reason } }).post();
+    expect(response.status).toBe(422);
+    expect(response.body.error.code).toBe('AI_INVALID_OUTPUT');
+  });
   it('uses the intersection of active type codes for all selected organisations', async () => {
     const { post, provider, repository } = setup();
     repository.listLeaveTypes.mockImplementation(async organisationId => organisationId === other ? [] : [{ id: 'a', organisationId, code: 'ANNUAL', name: 'Annual leave' }]);

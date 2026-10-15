@@ -8,6 +8,7 @@ export const aiDraftBody = z.object({
 export type AiDraftInput = z.infer<typeof aiDraftBody>;
 
 const draft = z.object({
+  reason: z.string().trim().min(1).max(2000).nullable().optional(),
   leaveTypeCode: z.string().min(1).max(64),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

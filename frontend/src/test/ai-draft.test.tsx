@@ -60,6 +60,69 @@ describe("AI draft review interaction (mock API)", () => {
     expect(props.onApply).toHaveBeenCalledWith(ready);
     expect(screen.getByRole("status")).toHaveTextContent("Details applied");
   });
+  it.each([false, true])(
+    "previews a reason and requires opt-in to replace existing text: %s",
+    async (replace) => {
+      const suggestion = {
+        ...ready,
+        draft: {
+          ...ready.draft,
+          reason: "I am requesting leave to attend a family event.",
+        },
+      };
+      vi.mocked(generateLeaveDraft).mockResolvedValue(suggestion);
+      const user = userEvent.setup();
+      render(<AiLeaveDraft {...props} currentReason="My own explanation" />);
+      await user.type(
+        screen.getByLabelText("What leave would you like?"),
+        "Annual leave next Thursday and Friday for a family event",
+      );
+      await user.click(screen.getByRole("button", { name: "Generate draft" }));
+      await screen.findByText(suggestion.draft.reason);
+      expect(props.onApply).not.toHaveBeenCalled();
+      const choice = screen.getByRole("checkbox", {
+        name: "Replace my existing private reason with this suggestion",
+      });
+      expect(choice).not.toBeChecked();
+      if (replace) await user.click(choice);
+      await user.click(
+        screen.getByRole("button", { name: "Use these details" }),
+      );
+      expect(props.onApply).toHaveBeenCalledWith({
+        ...suggestion,
+        draft: {
+          ...suggestion.draft,
+          reason: replace ? suggestion.draft.reason : undefined,
+        },
+      });
+    },
+  );
+  it("revokes replacement consent if the employee edits their reason after reviewing", async () => {
+    const suggestion = {
+      ...ready,
+      draft: { ...ready.draft, reason: "Suggested reason" },
+    };
+    vi.mocked(generateLeaveDraft).mockResolvedValue(suggestion);
+    const view = render(
+      <AiLeaveDraft {...props} currentReason="Original reason" />,
+    );
+    fireEvent.change(screen.getByLabelText("What leave would you like?"), {
+      target: { value: "Annual leave next week for a family event" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate draft" }));
+    const choice = await screen.findByRole("checkbox");
+    fireEvent.click(choice);
+    expect(choice).toBeChecked();
+    view.rerender(
+      <AiLeaveDraft {...props} currentReason="Newly edited reason" />,
+    );
+    expect(choice).not.toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Use these details" }));
+    expect(props.onApply).toHaveBeenCalledWith({
+      ...suggestion,
+      draft: { ...suggestion.draft, reason: undefined },
+    });
+  });
   it("shows clarification and retains the editable input without an apply button", async () => {
     vi.mocked(generateLeaveDraft).mockResolvedValue({
       referenceDate: "2026-10-15",

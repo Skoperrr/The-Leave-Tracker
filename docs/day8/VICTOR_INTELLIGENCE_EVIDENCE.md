@@ -163,3 +163,23 @@ Screenshots are labelled **simulated session/API data** and prove rendered layou
 | Manager assistant | [Desktop](screenshots/manager-summary-dlab-desktop.png) / [Mobile](screenshots/manager-summary-dlab-mobile.png) | [Desktop](screenshots/manager-summary-field-desktop.png) / [Mobile](screenshots/manager-summary-field-mobile.png) | [Desktop](screenshots/manager-summary-stride-desktop.png) / [Mobile](screenshots/manager-summary-stride-mobile.png) |
 
 Deployment and a real confirmed-account hosted walkthrough remain separate release checks. Kopano's Insights work remains independently owned; this change neither implements nor claims verification of that partner deliverable. No external submission or Google calendar invitation delivery was performed by these AI checks.
+
+## 15 October 2026 — private reason drafting
+
+Employee explanations in natural-language leave descriptions can now produce a formal first-person private reason. The review shows the suggestion before applying; existing manual text needs explicit replacement consent, which resets after another manual edit. Missing explanations do not clear an existing reason. Ordinary submission remains separate and the reason remains editable. The standalone private reason field is never included automatically in Gemini input.
+
+Validation completed locally:
+
+- Backend regression suite: **326 passed, 42 skipped** (database integration suites remain opt-in). Includes reason/date propagation, nullable reasons and rejection of blank, oversized and non-string suggestions.
+- Frontend regression suite: **106 passed**. Includes preserving or replacing existing text, revoking replacement consent after edits, applying only on review confirmation, editing the result and persisting only on explicit submission.
+- Backend typecheck and production build passed; frontend production build passed. The existing bundle-size advisory remains.
+- OpenAPI YAML parsed successfully and exposes the nullable, optional reason field with its 2,000-character limit.
+- Three **real Gemini calls with fictional inputs**, using reference date 2026-10-15 and the configured model:
+
+| Input | Actual suggested reason | Actual dates |
+|---|---|---|
+| I want sick leave tommorow because I cut my hand | I am requesting sick leave because I cut my hand. | 2026-10-16 to 2026-10-16 |
+| Sick leave tomorrow | null | 2026-10-16 to 2026-10-16 |
+| Annual leave next week to attend a family wedding | I am requesting annual leave to attend a family wedding. | 2026-10-19 to 2026-10-23 |
+
+These live calls validate generation only: they created no accounts or leave requests. Frontend submission evidence uses mocked APIs; this entry does not claim hosted end-to-end verification. Prompt instructions restrict invented medical facts, but employees still need to review generated wording for accuracy.

@@ -1559,6 +1559,12 @@ components:
             leaveTypeCode: {type: string}
             startDate: {type: string, format: date}
             endDate: {type: string, format: date}
+            reason:
+              type: string
+              nullable: true
+              minLength: 1
+              maxLength: 2000
+              description: Optional formal paraphrase of an employee-supplied explanation; null or omitted when none is provided. Review before applying.
         workingDays: {type: integer, minimum: 1}
         warnings:
           type: array

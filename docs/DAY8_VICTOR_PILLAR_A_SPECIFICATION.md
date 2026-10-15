@@ -182,3 +182,7 @@ Done means: real AI call demonstrated, no automatic save, core rules still enfor
 ## Starter prompt for Victor's model
 
 > Implement Pillar A from `docs/DAY8_VICTOR_PILLAR_A_SPECIFICATION.md`. First read both Day 8 specifications and inspect current main. I am Victor and own natural-language leave drafting plus the shared integration wiring. Kopano owns the full-stack Insights feature. Follow Day8-1.0 ownership and contracts; preserve the existing app and untracked reports. Build the AI draft → human review → existing leave submission flow, validate server-side and keep credentials private. Coordinate the partner's small wiring handoff rather than editing their feature modules. Distinguish mocked checks from real AI/database evidence. Do not claim completion while required live acceptance remains unverified.
+
+## 15 October 2026 — employee-requested private reason extension
+
+This supersedes the original manual-only reason drafting rule above. An employee-supplied explanation in the AI description may be formally paraphrased into optional `draft.reason` (nullable, at most 2,000 characters). Show it in the review; apply only on explicit confirmation. Preserve existing reason text unless the employee opts to replace it. Never invent medical facts or send the separate form reason automatically. Ordinary request submission remains explicit; all existing reason access controls and calendar exclusions remain in force.

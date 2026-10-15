@@ -9,7 +9,7 @@ import { interpretRelativeDates } from '../utils/ai-date-context.js';
 
 const timezone = 'Africa/Johannesburg' as const;
 export type AiDraftResult = { referenceDate: string; timezone: typeof timezone } & (
-  | { status: 'READY'; draft: { organisationIds: string[]; leaveTypeCode: string; startDate: string; endDate: string }; workingDays: number; warnings: string[] }
+  | { status: 'READY'; draft: { organisationIds: string[]; leaveTypeCode: string; startDate: string; endDate: string; reason?: string | null }; workingDays: number; warnings: string[] }
   | { status: 'NEEDS_CLARIFICATION'; draft: null; questions: string[] }
 );
 
@@ -97,7 +97,7 @@ export function createAiLeaveDraftService(repository: Pick<AccessRepository, 'li
       try { workingDays = calculateWorkingDays(parseDateOnly(draft.startDate), parseDateOnly(draft.endDate)); }
       catch { throw invalidOutput(); }
       if (explicitDates.some(date => date !== draft.startDate && date !== draft.endDate)) throw invalidOutput();
-      return { ...common, status: 'READY', draft: { ...draft, organisationIds: [...input.organisationIds] }, workingDays,
+      return { ...common, status: 'READY', draft: { ...draft, reason: draft.reason ?? null, organisationIds: [...input.organisationIds] }, workingDays,
         warnings: [
           ...(dateInterpretation ? [dateInterpretation.explanation] : []),
           ...(!/\b\d{4}\b/.test(input.text) && !dateInterpretation

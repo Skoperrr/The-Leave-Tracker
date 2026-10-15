@@ -185,6 +185,9 @@ beforeEach(() => {
           status: "READY",
           draft: {
             organisationIds: body.organisationIds,
+            reason: String(body.text).includes("family event")
+              ? "I am requesting annual leave to attend a family event."
+              : null,
             leaveTypeCode: "ANNUAL",
             startDate: "2026-10-22",
             endDate: "2026-10-23",
@@ -943,6 +946,50 @@ describe("Frontend integration flows", () => {
         (call) => call.path === "/leave-requests" && call.method === "POST",
       ),
     ).toHaveLength(1);
+  });
+  it("applies a reviewed formal reason to the form and saves it only on explicit submission", async () => {
+    const user = userEvent.setup();
+    mount("/requests/new");
+    await screen.findByRole("heading", { name: "Request leave" });
+    await waitFor(() =>
+      expect(screen.getByLabelText("What leave would you like?")).toBeEnabled(),
+    );
+    await user.type(
+      screen.getByLabelText("What leave would you like?"),
+      "Annual leave next Thursday and Friday for a family event",
+    );
+    await user.click(screen.getByRole("button", { name: "Generate draft" }));
+    const formalReason =
+      "I am requesting annual leave to attend a family event.";
+    await screen.findByText(formalReason);
+    expect(screen.getByLabelText(/Private reason/)).toHaveValue("");
+    await user.click(screen.getByRole("button", { name: "Use these details" }));
+    expect(screen.getByLabelText(/Private reason/)).toHaveValue(formalReason);
+    expect(
+      calls.filter(
+        (call) => call.path === "/leave-requests" && call.method === "POST",
+      ),
+    ).toHaveLength(0);
+    await user.clear(screen.getByLabelText(/Private reason/));
+    await user.type(
+      screen.getByLabelText(/Private reason/),
+      "I am attending a family wedding.",
+    );
+    await user.click(screen.getByRole("button", { name: "Submit request" }));
+    await screen.findByRole("heading", {
+      name: "Your time away is on its way.",
+    });
+    const saves = calls.filter(
+      (call) => call.path === "/leave-requests" && call.method === "POST",
+    );
+    expect(saves).toHaveLength(1);
+    expect(saves[0]?.body?.reason).toBe("I am attending a family wedding.");
+    expect(calls.find((call) => call.path === "/ai/leave-draft")?.body).toEqual(
+      {
+        organisationIds: ["org-dlab"],
+        text: "Annual leave next Thursday and Friday for a family event",
+      },
+    );
   });
   it("cancels only the selected child and refetches organisation requests", async () => {
     requests = [createRequest("r-dlab", dlab), createRequest("r-field", field)];

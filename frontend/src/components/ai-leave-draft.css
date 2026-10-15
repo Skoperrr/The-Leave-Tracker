@@ -65,3 +65,24 @@
     width: 100%;
   }
 }
+
+.ai-draft-reason {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin: 14px 0;
+}
+.ai-draft-reason h4 {
+  margin: 0;
+}
+.ai-reason-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ai-reason-choice input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin-top: 3px;
+}

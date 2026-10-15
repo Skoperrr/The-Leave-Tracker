@@ -12,6 +12,8 @@ Updated 15 October 2026. All three features use the existing server-only Gemini 
 
 Dates use the server's current Africa/Johannesburg date. Missing years use the current year. On 15 October 2026, tomorrow is 16 October, next week is Monday 19–Friday 23 October, and “next Thursday and Friday” is 22–23 October. “Next [weekday]” means that weekday in the following calendar week, even if there is an earlier occurrence this week. The interpretation is displayed before submission. Separated weekdays such as “next Monday and Friday” are not broadened to include intervening days. A bare request without a leave type still needs the employee to specify it.
 
+When an employee includes an explanation, the draft can suggest a natural, formal private reason. For example, “Sick leave tomorrow because I cut my hand” can suggest “I am requesting sick leave because I cut my hand.” Gemini is instructed not to invent medical facts. The reason is shown in the review and applied only with **Use these details**; submission is separate. Existing reason text is preserved unless the employee explicitly opts to replace it. Missing explanations leave that field unchanged. Descriptions go to Google; the separate private reason field is never sent automatically. Reasons remain excluded from calendar events and manager AI summaries.
+
 ## Manager assistant: evidence and limits
 
 The backend reads active, authorised review members and PENDING/APPROVED requests overlapping the selected window. Managers see assigned direct reports; admins see their wider organisation review scope. Both exclude the actor, matching the no-self-approval review queue. Roles and assignments are rechecked inside the database read transaction.

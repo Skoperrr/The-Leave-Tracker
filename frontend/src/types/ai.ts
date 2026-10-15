@@ -11,6 +11,7 @@ export const aiDraftResultSchema = z.intersection(
       draft: z.object({
         organisationIds: z.array(z.string()).min(1),
         leaveTypeCode: z.string().min(1),
+        reason: z.string().trim().min(1).max(2000).nullable().optional(),
         startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       }),

@@ -42,6 +42,7 @@ export function NewRequest() {
   const start = watch("startDate");
   const end = watch("endDate");
   const code = watch("leaveTypeCode");
+  const reason = watch("reason") ?? "";
   const types = useQueries({
     queries: ids.map((id) => ({
       queryKey: ["api", session?.user.id, "leave-types", id],
@@ -154,8 +155,15 @@ export function NewRequest() {
               organisations={memberships}
               leaveTypes={sharedTypes}
               formRevision={`${code}|${start}|${end}`}
+              currentReason={reason}
               disabled={mutation.isPending || loading || Boolean(typeError)}
               onApply={({ draft }) => {
+                if (draft.reason) {
+                  setValue("reason", draft.reason, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }
                 setValue("leaveTypeCode", draft.leaveTypeCode, {
                   shouldDirty: true,
                   shouldValidate: true,

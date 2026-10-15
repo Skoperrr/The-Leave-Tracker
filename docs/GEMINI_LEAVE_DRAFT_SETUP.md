@@ -31,10 +31,10 @@ Google currently lists a free tier for 3.5 Flash-Lite. Availability and quotas d
 2. Describe the type and dates naturally. Examples: “Annual leave next week”, “Sick leave tomorrow”, or “Annual leave from 22 October to 23 October”. The server uses today's date in Africa/Johannesburg and infers the current year when omitted.
 3. Choose **Generate draft**. Review the type, organisation names, inclusive dates, server-calculated weekdays and warnings.
 4. If clarification is requested, edit the description and regenerate. Ambiguous “next Thursday”, missing type and unsupported half days are not silently guessed. Omission of the year alone is no longer a reason to request clarification.
-5. Choose **Use these details** to replace only the form's type and dates. The private reason remains your own input. You can edit the form afterward.
+5. Choose **Use these details** to fill in the type, dates and any suggested private reason. If you already entered a reason, it is preserved unless you select **Replace my existing private reason with this suggestion**. You can edit all applied details before submitting.
 6. Choose **Submit request** separately. Only this step creates pending leave; it rechecks the actual balance, overlaps and memberships. A draft is not a reservation.
 
-Your description is sent to Google. The panel explains this before generation and advises using only types/dates. Google states free-tier content may be used to improve its products; do not include medical details or other private reasons in AI text. Those belong in the existing private reason field, which is not sent by this feature.
+Your description, including any explanation you choose to include, is sent to Google. The panel explains this before generation, including Google's free-tier product-improvement notice. Gemini is instructed to paraphrase your explanation in natural, formal first-person language without inventing medical details. No explanation means no suggested reason. For sensitive details, use the existing private reason field directly; that field is never sent to Gemini automatically. Review the suggestion for accuracy: generated wording is not a guarantee of factual correctness. Private reasons remain excluded from team calendars and calendar invitations.
 
 ## Endpoint and protections
 
