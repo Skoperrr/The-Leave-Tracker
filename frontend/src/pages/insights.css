@@ -1,0 +1,113 @@
+.insights-page {
+  min-width: 0;
+}
+.insights-page .panel {
+  margin-bottom: 20px;
+}
+.insights-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+.insights-filters input {
+  width: 100%;
+  min-width: 0;
+}
+.insights-filters > [role="alert"] {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.insights-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.insights-summary h2 {
+  font-size: 1rem;
+}
+.insights-stat {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 12px 0;
+  color: var(--ink, #183b35);
+}
+.insights-table-scroll {
+  overflow-x: auto;
+  max-height: 480px;
+}
+.insights-page table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.insights-page caption {
+  text-align: left;
+  font-weight: 600;
+  padding: 12px 0;
+}
+.insights-page th,
+.insights-page td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line, #dce5df);
+  vertical-align: top;
+}
+.insights-page thead {
+  background: var(--surface, #f4f7f3);
+}
+.insights-page th {
+  font-weight: 650;
+}
+.insights-warning td:last-child {
+  font-weight: 800;
+}
+.insights-page summary {
+  cursor: pointer;
+  padding: 14px 0;
+  font-weight: 600;
+}
+.insights-page li {
+  margin: 8px 0;
+}
+.insights-bars {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+.insights-bar-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 50px;
+  gap: 12px;
+  align-items: center;
+}
+.insights-bar-track {
+  height: 22px;
+  background: var(--surface, #e9efea);
+  border-left: 1px solid currentColor;
+}
+.insights-bar-track > span {
+  display: block;
+  height: 100%;
+  background: var(--green, #1f5549);
+}
+.insights-refresh {
+  margin-bottom: 16px;
+}
+@media (max-width: 1000px) {
+  .insights-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .insights-filters,
+  .insights-summary {
+    grid-template-columns: 1fr;
+  }
+  .insights-page .panel {
+    padding: 18px;
+  }
+  .insights-page th,
+  .insights-page td {
+    padding: 10px 8px;
+  }
+}

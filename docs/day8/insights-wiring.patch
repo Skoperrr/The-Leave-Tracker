@@ -1,0 +1,95 @@
+--- a/backend/src/services/access.ts
++++ b/backend/src/services/access.ts
+@@ -1,3 +1,4 @@
++import type { InsightsService } from './insights.js';
+ import type { AccessRepository, Account } from '../repositories/access.js';
+ import type { TokenVerifier } from '../lib/supabase.js';
+ import { ApiError } from '../utils/api-error.js';
+@@ -8,7 +9,7 @@
+ import type { CalendarIntegrationService } from './calendar-integration.js';
+ import type { CalendarWorker } from './calendar-worker.js';
+
+-export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService; onboarding?: OnboardingService; google?: CalendarIntegrationService; calendarWorker?: CalendarWorker };
++export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService; onboarding?: OnboardingService; insights?: InsightsService; google?: CalendarIntegrationService; calendarWorker?: CalendarWorker };
+
+ export async function authenticateAccount(services: AccessServices, token: string): Promise<Account> {
+   const identityId = await services.verifyToken(token);
+--- a/backend/src/routes/index.ts
++++ b/backend/src/routes/index.ts
+@@ -1,3 +1,4 @@
++import { createInsightsRouter } from './insights.js';
+ import { Router } from 'express';
+ import { getHealth } from '../controllers/health.js';
+ import { z } from 'zod';
+@@ -24,6 +25,7 @@
+     res.json({ data: await services.onboarding.profile(token, (res.locals.validated as { fullName: string }).fullName) });
+   });
+   router.use(authenticate(services));
++  router.use(createInsightsRouter(services));
+   router.get('/me', getMe);
+   router.get('/organisations', getOrganisations);
+   router.get('/organisations/:orgId/leave-types', validate(z.object({ orgId: z.uuid() }), 'params'), getLeaveTypes(services));
+--- a/backend/src/server.ts
++++ b/backend/src/server.ts
+@@ -1,3 +1,5 @@
++import { createInsightsRepository } from './repositories/insights.js';
++import { createInsightsService } from './services/insights.js';
+ import { createCalendarRuntime } from './services/calendar-runtime.js';
+ import { createOnboardingService } from './services/onboarding.js';
+ import { createApp } from './application.js';
+@@ -24,6 +26,7 @@
+   const services = { ...createCalendarRuntime(database, configuration), verifyToken: createTokenVerifier(configuration), repository: createAccessRepository(database),
+     leave: createLeaveService(createLeaveRepository(database)), manager: createManagerService(createLeaveRepository(database)),
+     admin: createAdminService(createLeaveRepository(database)),
++    insights: createInsightsService(createInsightsRepository(database)),
+     onboarding: createOnboardingService(database, createConfirmedIdentityVerifier(configuration)) };
+   const server = createApp(environment, services).listen(environment.PORT, () => {
+     console.info(`Leave Tracker API listening on port ${environment.PORT}`);
+--- a/backend/src/index.mts
++++ b/backend/src/index.mts
+@@ -1,3 +1,5 @@
++import { createInsightsRepository } from './repositories/insights.js';
++import { createInsightsService } from './services/insights.js';
+ import { createCalendarRuntime } from './services/calendar-runtime.js';
+ import { createOnboardingService } from './services/onboarding.js';
+ import express from 'express';
+@@ -25,6 +27,7 @@
+   leave: createLeaveService(repository),
+   manager: createManagerService(repository),
+   admin: createAdminService(repository),
++    insights: createInsightsService(createInsightsRepository(database)),
+   onboarding: createOnboardingService(database, createConfirmedIdentityVerifier(configuration)),
+ }));
+ export default app;
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -17,6 +17,7 @@
+ import { MyRequests } from "./pages/MyRequests";
+ import { ManagerInbox } from "./pages/ManagerInbox";
+ import { Calendar } from "./pages/Calendar";
++import { Insights } from "./pages/Insights";
+ import { Admin } from "./pages/Admin";
+ import { Loading } from "./components/ui";
+ const DashboardPreview = import.meta.env.DEV
+@@ -91,6 +92,7 @@
+           <Route path="calendar" element={<Calendar />} />
+           <Route element={<RequireRole roles={["MANAGER", "ADMIN"]} />}>
+             <Route path="manager" element={<ManagerInbox />} />
++            <Route path="insights" element={<Insights />} />
+           </Route>
+           <Route element={<RequireRole roles={["ADMIN"]} />}>
+             <Route path="admin" element={<Admin />} />
+--- a/frontend/src/layouts/AppLayout.tsx
++++ b/frontend/src/layouts/AppLayout.tsx
+@@ -128,7 +128,10 @@
+     { path: "/requests", label: "My requests", icon: "history", end: true },
+     { path: "/calendar", label: "Team calendar", icon: "calendar" },
+     ...(reviewer
+-      ? [{ path: reviewPath, label: "Leave approvals", icon: "approval" }]
++      ? [
++          { path: reviewPath, label: "Leave approvals", icon: "approval" },
++          { path: "/insights", label: "Insights", icon: "overview" },
++        ]
+       : []),
+     ...(membership.role === "ADMIN"
+       ? [
