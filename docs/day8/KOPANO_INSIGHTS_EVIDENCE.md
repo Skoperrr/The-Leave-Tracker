@@ -5,9 +5,11 @@ Base: `ab3c359c8c4e7205c61cee321517eb66a692a442` (latest main inspected and fetc
 
 ## Delivery status
 
-The feature-local backend and frontend are implemented. The shared integration files remain unchanged on this branch, following the editing agreement in both Day 8 specifications. Victor receives an exact wiring patch and an OpenAPI fragment in this directory. Applying that patch in a separate rehearsal checkout successfully registers the actual application endpoint, includes the page in the production frontend bundle, and passes both builds and the regression suites.
+The original feature-local branch was merged into main in `b4d8135`. At the user's request, the shared integration is now implemented on top of that main revision, preserving Victor's Gemini drafting feature. Insights is registered after authentication; both standalone and Vercel runtime entries inject its service. `/insights` is registered behind MANAGER/ADMIN guards with a side-panel link, and its OpenAPI fragment is merged alongside the AI endpoint.
 
-This is **not a claim that `/insights` is mounted on main or deployed**. Victor must incorporate the wiring alongside Pillar A. No schema, package, lockfile, authentication, leave-policy or calendar-worker changes are required.
+Current combined checks: **256 backend tests pass, 37 opt-in database tests skipped; 98 frontend tests pass; source/test typechecks and both builds pass**. The application-wiring checks are now permanent rather than opt-in. Authenticated application-flow tests cover the sidebar link, page, employee guard and mobile drawer. See [integration status](INTEGRATION_STATUS.md).
+
+The earlier fixture and isolated rehearsal evidence below remains historical evidence. No schema, package, lockfile, authentication, leave-policy or calendar-worker changes were required. Hosted acceptance and read-only live-data reconciliation remain separate from these local checks.
 
 ## Implementation and access
 

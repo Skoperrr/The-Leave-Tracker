@@ -1,3 +1,4 @@
+import type { InsightsService } from './insights.js';
 import type { AccessRepository, Account } from '../repositories/access.js';
 import type { TokenVerifier } from '../lib/supabase.js';
 import { ApiError } from '../utils/api-error.js';
@@ -9,7 +10,7 @@ import type { CalendarIntegrationService } from './calendar-integration.js';
 import type { CalendarWorker } from './calendar-worker.js';
 import type { AiLeaveDraftService } from './ai-leave-draft.js';
 
-export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService; onboarding?: OnboardingService; google?: CalendarIntegrationService; calendarWorker?: CalendarWorker; ai?: AiLeaveDraftService };
+export type AccessServices = { verifyToken: TokenVerifier; repository: AccessRepository; leave?: LeaveService; manager?: ManagerService; admin?: AdminService; onboarding?: OnboardingService; insights?: InsightsService; google?: CalendarIntegrationService; calendarWorker?: CalendarWorker; ai?: AiLeaveDraftService };
 
 export async function authenticateAccount(services: AccessServices, token: string): Promise<Account> {
   const identityId = await services.verifyToken(token);

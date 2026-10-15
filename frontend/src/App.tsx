@@ -17,6 +17,7 @@ import { NewRequest } from "./pages/NewRequest";
 import { MyRequests } from "./pages/MyRequests";
 import { ManagerInbox } from "./pages/ManagerInbox";
 import { Calendar } from "./pages/Calendar";
+import { Insights } from "./pages/Insights";
 import { Admin } from "./pages/Admin";
 import { Loading } from "./components/ui";
 const DashboardPreview = import.meta.env.DEV
@@ -91,6 +92,7 @@ export function App() {
           <Route path="calendar" element={<Calendar />} />
           <Route element={<RequireRole roles={["MANAGER", "ADMIN"]} />}>
             <Route path="manager" element={<ManagerInbox />} />
+            <Route path="insights" element={<Insights />} />
           </Route>
           <Route element={<RequireRole roles={["ADMIN"]} />}>
             <Route path="admin" element={<Admin />} />

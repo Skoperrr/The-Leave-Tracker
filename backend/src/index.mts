@@ -1,3 +1,5 @@
+import { createInsightsRepository } from './repositories/insights.js';
+import { createInsightsService } from './services/insights.js';
 import { createCalendarRuntime } from './services/calendar-runtime.js';
 import { createOnboardingService } from './services/onboarding.js';
 import express from 'express';
@@ -29,6 +31,7 @@ app.use(createApp(environment, {
   leave: createLeaveService(repository),
   manager: createManagerService(repository),
   admin: createAdminService(repository),
+  insights: createInsightsService(createInsightsRepository(database)),
   onboarding: createOnboardingService(database, createConfirmedIdentityVerifier(configuration)),
 }));
 export default app;

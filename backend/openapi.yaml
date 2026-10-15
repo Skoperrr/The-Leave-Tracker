@@ -995,6 +995,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /insights:
+    get:
+      operationId: getInsights
+      summary: Scoped real-data leave planning for active managers and admins
+      description: Dates are inclusive, real YYYY-MM-DD from year 2000, with at most
+        366 calendar days. Unknown or repeated query fields are rejected. ADMIN sees
+        all current active memberships; MANAGER sees current active direct reports only.
+        Reports are independent of AI configuration. No private reasons, comments or
+        emails are returned.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: organisationId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: allocationYear
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 2000
+          maximum: 9999
+      - name: lowBalanceThreshold
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 365
+          default: 3
+      - name: coverageThresholdPercent
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 30
+      responses:
+        '200':
+          description: A current-workforce planning snapshot. Zero workforce is a valid
+            result.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InsightsResult'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          description: Insights service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightsUnavailableError'
 components:
   securitySchemes:
     cronAuth:
@@ -1062,6 +1146,231 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    InsightsResult:
+      type: object
+      additionalProperties: false
+      required:
+      - organisationId
+      - generatedAt
+      - timezone
+      - period
+      - allocationYear
+      - scope
+      - activeMemberCount
+      - thresholds
+      - summary
+      - lowBalances
+      - monthly
+      - dailyCoverage
+      - byType
+      - limitations
+      properties:
+        organisationId:
+          type: string
+          format: uuid
+        generatedAt:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+          enum:
+          - Africa/Johannesburg
+        period:
+          type: object
+          additionalProperties: false
+          required:
+          - from
+          - to
+          properties:
+            from:
+              type: string
+              format: date
+            to:
+              type: string
+              format: date
+        allocationYear:
+          type: integer
+          minimum: 2000
+          maximum: 9999
+        scope:
+          type: string
+          enum:
+          - ORGANISATION
+          - DIRECT_REPORTS
+        activeMemberCount:
+          type: integer
+          minimum: 0
+        thresholds:
+          type: object
+          additionalProperties: false
+          required:
+          - lowBalanceDays
+          - coveragePercent
+          properties:
+            lowBalanceDays:
+              type: integer
+              minimum: 0
+              maximum: 365
+            coveragePercent:
+              type: integer
+              minimum: 1
+              maximum: 100
+        summary:
+          type: object
+          additionalProperties: false
+          required:
+          - approvedRequestCount
+          - pendingRequestCount
+          - approvedPersonDays
+          - upcomingApprovedPersonDays
+          - coverageWarningDays
+          - unallocatedMemberCount
+          properties:
+            approvedRequestCount:
+              type: integer
+              minimum: 0
+            pendingRequestCount:
+              type: integer
+              minimum: 0
+            approvedPersonDays:
+              type: integer
+              minimum: 0
+            upcomingApprovedPersonDays:
+              type: integer
+              minimum: 0
+            coverageWarningDays:
+              type: integer
+              minimum: 0
+            unallocatedMemberCount:
+              type: integer
+              minimum: 0
+        lowBalances:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - membershipId
+            - employeeDisplayName
+            - leaveTypeCode
+            - leaveTypeName
+            - allocatedDays
+            - approvedDays
+            - pendingDays
+            - remainingDays
+            properties:
+              membershipId:
+                type: string
+                format: uuid
+              employeeDisplayName:
+                type: string
+              leaveTypeCode:
+                type: string
+              leaveTypeName:
+                type: string
+              allocatedDays:
+                type: number
+              approvedDays:
+                type: number
+              pendingDays:
+                type: number
+              remainingDays:
+                type: number
+        monthly:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - month
+            - approvedPersonDays
+            properties:
+              month:
+                type: string
+                pattern: ^\d{4}-\d{2}$
+              approvedPersonDays:
+                type: integer
+                minimum: 0
+        dailyCoverage:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - date
+            - approvedPeople
+            - pendingPeople
+            - projectedPeople
+            - approvedPercent
+            - projectedPercent
+            - warning
+            properties:
+              date:
+                type: string
+                format: date
+              approvedPeople:
+                type: integer
+                minimum: 0
+              pendingPeople:
+                type: integer
+                minimum: 0
+              projectedPeople:
+                type: integer
+                minimum: 0
+              approvedPercent:
+                type: number
+                minimum: 0
+                maximum: 100
+              projectedPercent:
+                type: number
+                minimum: 0
+                maximum: 100
+              warning:
+                type: boolean
+        byType:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - leaveTypeCode
+            - leaveTypeName
+            - approvedRequestCount
+            - approvedWorkingDays
+            properties:
+              leaveTypeCode:
+                type: string
+              leaveTypeName:
+                type: string
+              approvedRequestCount:
+                type: integer
+                minimum: 0
+              approvedWorkingDays:
+                type: integer
+                minimum: 0
+        limitations:
+          type: array
+          items:
+            type: string
+    InsightsUnavailableError:
+      type: object
+      additionalProperties: false
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required:
+          - code
+          - message
+          properties:
+            code:
+              type: string
+              enum:
+              - INSIGHTS_NOT_CONFIGURED
+            message:
+              type: string
     AiReadyDraft:
       type: object
       required: [status, referenceDate, timezone, draft, workingDays, warnings]

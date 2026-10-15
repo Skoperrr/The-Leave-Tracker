@@ -1,8 +1,10 @@
 # Victor — Insights integration handoff
 
+**Integration update:** the user has requested the shared wiring, which is now implemented on top of main `b4d8135`, preserving Victor's AI changes. The patch below records the original handoff; **do not apply it again after this integration**. See [current status](INTEGRATION_STATUS.md). Backend registration tests now run by default, without `INSIGHTS_INTEGRATION_REHEARSAL`.
+
 Branch: `day8/kopano-insights`, based on main `ab3c359`. Merge the feature modules before applying the shared-file changes. The feature commit is the commit adding this document; use `git log --oneline -- docs/day8/KOPANO_INSIGHTS_HANDOFF.md` to identify it.
 
-## Shared wiring
+## Original shared wiring patch (already integrated)
 
 The feature branch intentionally does not edit your central integration files. Review/apply `docs/day8/insights-wiring.patch` from the repository root:
 
@@ -43,12 +45,12 @@ Success: `{data: InsightsResult}`, exactly Day8-1.0. No browser role/team/user o
 ```sh
 npm --prefix backend run typecheck
 npm --prefix backend run build
-INSIGHTS_INTEGRATION_REHEARSAL=1 npm --prefix backend test
+npm --prefix backend test
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
-`INSIGHTS_INTEGRATION_REHEARSAL=1` enables actual `createApp` registration checks once the patch is present; it does not itself register routes. A separate isolated checkout with the patch and merged OpenAPI has passed that rehearsal. The feature branch's default tests intentionally skip these registration checks while its shared files are unchanged.
+The actual `createApp` registration checks now run by default. The combined implementation passes 256 backend tests (37 database checks skipped) and 98 frontend tests. Both builds and source/test typechecks pass. The earlier separate rehearsal confirmed the original patch; the current source contains its shared wiring alongside Victor's AI feature.
 
 Detailed fixture calculations, timings, test counts, scope limitations, native PostgreSQL test command and authorised read-only live verification are in `KOPANO_INSIGHTS_EVIDENCE.md`. **B-10 live data, hosted page verification and desktop/mobile screenshots remain pending.** Do not label local fixture or DOM evidence as production or browser evidence.
 

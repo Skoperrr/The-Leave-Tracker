@@ -193,6 +193,58 @@ beforeEach(() => {
           warnings: ["Balances and overlaps are checked on submission."],
         });
       const orgId = url.searchParams.get("organisationId");
+      if (path === "/insights") {
+        const from = url.searchParams.get("from")!,
+          to = url.searchParams.get("to")!;
+        const days = [];
+        for (
+          let time = Date.parse(from);
+          time <= Date.parse(to);
+          time += 86_400_000
+        ) {
+          const date = new Date(time);
+          if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6)
+            days.push({
+              date: date.toISOString().slice(0, 10),
+              approvedPeople: 0,
+              pendingPeople: 0,
+              projectedPeople: 0,
+              approvedPercent: 0,
+              projectedPercent: 0,
+              warning: false,
+            });
+        }
+        return response({
+          organisationId: orgId,
+          generatedAt: new Date().toISOString(),
+          timezone: "Africa/Johannesburg",
+          period: { from, to },
+          allocationYear: Number(url.searchParams.get("allocationYear")),
+          scope:
+            profile.memberships.find(
+              (member) => member.organisationId === orgId,
+            )?.role === "ADMIN"
+              ? "ORGANISATION"
+              : "DIRECT_REPORTS",
+          activeMemberCount: 1,
+          thresholds: { lowBalanceDays: 3, coveragePercent: 30 },
+          summary: {
+            approvedRequestCount: 0,
+            pendingRequestCount: 0,
+            approvedPersonDays: 0,
+            upcomingApprovedPersonDays: 0,
+            coverageWarningDays: 0,
+            unallocatedMemberCount: 0,
+          },
+          lowBalances: [],
+          monthly: [...new Set([from.slice(0, 7), to.slice(0, 7)])].map(
+            (month) => ({ month, approvedPersonDays: 0 }),
+          ),
+          dailyCoverage: days,
+          byType: [],
+          limitations: ["Simulated API data for route integration tests."],
+        });
+      }
       if (path.endsWith("/leave-types")) {
         const org = path.split("/")[2];
         return response([
@@ -407,6 +459,39 @@ function mount(path: string) {
   return { ...ui, cache };
 }
 describe("Frontend integration flows", () => {
+  it.each(["ADMIN", "MANAGER"] as const)(
+    "opens Insights from the sidebar for %s",
+    async (role) => {
+      profile.memberships = [{ ...dlab, role }];
+      mount("/");
+      const link = await screen.findByRole("link", { name: "Insights" });
+      expect(link).toHaveAttribute("href", "/insights");
+      await userEvent.click(link);
+      await screen.findByRole("heading", { name: "Insights" });
+      await screen.findByText(
+        role === "ADMIN" ? /Organisation-wide/ : /Direct reports only/,
+      );
+      expect(
+        calls.some((call) =>
+          call.path.startsWith("/insights?organisationId=org-dlab&"),
+        ),
+      ).toBe(true);
+      expect(
+        screen.getByRole("heading", {
+          name: "Approved request-days by leave type",
+        }),
+      ).toBeInTheDocument();
+    },
+  );
+  it("guards the Insights route and hides its navigation from employees", async () => {
+    mount("/insights");
+    await screen.findByRole("heading", { name: "Permission required" });
+    expect(
+      screen.queryByRole("link", { name: "Insights" }),
+    ).not.toBeInTheDocument();
+    expect(calls.some((call) => call.path.startsWith("/insights"))).toBe(false);
+  });
+
   it("falls back to the current month for an invalid calendar date link", async () => {
     mount("/calendar?date=2026-02-31");
     expect(await screen.findByLabelText("Calendar month")).toHaveValue(
@@ -640,6 +725,15 @@ describe("Frontend integration flows", () => {
         name: "Workspace navigation",
       });
       expect(panel).toHaveAttribute("aria-modal", "true");
+      if (role === "EMPLOYEE")
+        expect(
+          within(panel).queryByRole("link", { name: "Insights" }),
+        ).not.toBeInTheDocument();
+      else
+        expect(
+          within(panel).getByRole("link", { name: "Insights" }),
+        ).toHaveAttribute("href", "/insights");
+
       expect(
         within(panel).getByRole("button", { name: "Close navigation panel" }),
       ).toHaveFocus();
